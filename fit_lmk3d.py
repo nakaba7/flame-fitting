@@ -127,7 +127,8 @@ def run_fitting():
     scale_factor = get_unit_factor('m') / get_unit_factor(unit)
     lmk_3d = scale_factor*np.load(lmk_path)
     print("loaded 3d landmark from:", lmk_path)
-
+    print("landmark", lmk_3d)
+    print("landmark shape", lmk_3d.shape)  
     # model
     model_path = './models/generic_model.pkl' # change to 'female_model.pkl' or 'male_model.pkl', if gender is known
     model = load_model(model_path)       # the loaded model object is a 'chumpy' object, check https://github.com/mattloper/chumpy for details
@@ -177,7 +178,7 @@ def run_fitting():
     # write result
     output_path = join( output_dir, 'fit_lmk3d_result.obj' )
     write_simple_obj( mesh_v=mesh_v, mesh_f=mesh_f, filepath=output_path, verbose=False )
-
+    
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
