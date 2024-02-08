@@ -49,7 +49,7 @@ def manual_annotation(input_path, output_img_path, output_csv_path):
 
 if __name__ == '__main__':
     manual_img_num = 10
-    folder_name = 'Nakabayashi'
+    folder_name = 'Nakabayashi_raspicamera'
 
     input_frames_path = os.listdir(f'FrameImages/{folder_name}')
     output_img_dir = f'FrameImages/{folder_name}_Annotated/Images'
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         if img_count == manual_img_num:
             print('Manual annotation finished')
             break
-        input_img = os.path.join('FrameImages/Nakabayashi', img)
+        input_img = os.path.join(f'FrameImages/{folder_name}', img)
         manual_annotation(input_img, os.path.join(output_img_dir, f'{img[:-4]}_annotated.jpg'), os.path.join(output_csv_dir, f'{img[:-4]}_annotated.csv'))
         img_count += 1
 
