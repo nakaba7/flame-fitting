@@ -28,19 +28,18 @@ def send_commands_simultaneously(command):
 if __name__ == "__main__":
     print("Connected to Raspberry Pi. Press Enter to capture an image, 'q' to quit.")
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sa:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sb:
-            sa.connect((HOST_A, PORT))
-            sb.connect((HOST_B, PORT))
-            count = 0
-            while True:
-                if count == 60:
-                    send_commands_simultaneously(b'q')
-                    print("Capture Closed.")
-                    break  # ループを抜けて終了
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sa, socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sb:
+        sa.connect((HOST_A, PORT))
+        sb.connect((HOST_B, PORT))
+        count = 0
+        while True:
+            if count == 60:
+                send_commands_simultaneously(b'q')
+                print("Capture Closed.")
+                break  # ループを抜けて終了
 
-                print(datetime.datetime.now())
-                send_commands_simultaneously(b'c')
-                print("Signal sent to Raspberry Pi to capture an image.")
-                count += 1
-                time.sleep(1)
+            print(datetime.datetime.now())
+            send_commands_simultaneously(b'c')
+            print("Signal sent to Raspberry Pi to capture an image.")
+            count += 1
+            time.sleep(1)
