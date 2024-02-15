@@ -1,5 +1,6 @@
 import cv2
 import os
+import argparse
 
 """
 動画ファイルのすべてのフレームを静止画の画像ファイルとして切り出して保存するサンプルコード。
@@ -39,8 +40,16 @@ def save_all_frames(video_path, dir_path, basename, ext='jpg'):
 
     cap.release()
 
-if __name__ == '__main__':
-    folder_name = 'Nakabayashi'
+def main(args):
+    input_video_path = args.i
+    output_folder_path = args.o
+    output_folder_path = os.path.join('FaceData', output_folder_path)
+    if not os.path.exists(output_folder_path):
+        os.makedirs(output_folder_path)
+    save_all_frames(input_video_path, output_folder_path, 'frame')
 
-    folder_name += '_raw'
-    save_all_frames('Videos/webcamvideo.mp4', f'FrameImages/{folder_name}', 'frame')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', default='hoge.mp4', type=str,  help='input video file name')
+    parser.add_argument('-o', default='hoge', type=str,  help='output folder name of the images to be saved')
+    main(parser.parse_args())
