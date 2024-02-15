@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import argparse
 
 def triangulate_points(P1, P2, points1, points2):
     # P1, P2: カメラa, bの射影行列
@@ -18,7 +19,9 @@ def triangulate_points(P1, P2, points1, points2):
 
     return points_3d
 
-def main():
+def main(args):
+    name = args.n
+    """
     # カメラa, bの内部パラメータと歪み係数
     mtx_a = np.load("ChessBoard_a_mtx.npy")
     dist_a = np.load("ChessBoard_a_dist.npy")
@@ -28,27 +31,24 @@ def main():
     # カメラa, bの外部パラメータ
     R = np.load("R.npy")
     T = np.load("T.npy")
-
+    """
     # カメラa, bの射影行列
-    P1 = mtx_a @ np.hstack([np.eye(3), np.zeros((3, 1))])
-    P2 = mtx_b @ np.hstack([R, T])
-
-    # プロジェクション行列の計算
-    P1 = np.dot(mtx_a, np.hstack((np.eye(3), np.zeros((3, 1)))))
-    P2 = np.dot(mtx_b, np.hstack((R, T.reshape(-1, 1))))
-
-    print("Caluculated P1: ", P1)
-    print("Saved P1: ", np.load("P1.npy"))
+    P1 = np.load("P1.npy")
+    P2 = np.load("P2.npy")
+    #↑計算で出すか，キャリブレーションで出したものを使うか
 
     # 画像1, 2における特徴点の座標
-    points1 = np.array([[0, 0], [1, 0], [0, 1], [1, 1]], dtype=np.float32)
-    points2 = np.array([[0, 0], [1, 0], [0, 1], [1, 1]], dtype=np.float32)
+    points1 = np.load(f"points_a_{name}.npy")
+    points2 = np.load(f"points_b_{name}.npy")
 
     # 三次元座標を計算
-    points_3d = triangulate_points(P1, P2, points1, points2)
-
-    # 三次元座標を表示
-    print(points_3d)
+    for point1, point2 in zip(points1, points2):
+        point_3d = triangulate_points(P1, P2, point1, point2)
+        print(point1,point2)
+        print("↓")
+        print(point_3d)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', type=str, help='Participant name')
+    main(parser.parse_args())
