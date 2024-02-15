@@ -61,7 +61,7 @@ for img_file1, img_file2 in zip(images1, images2):
     img2 = cv2.imread(img_file2)
     gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
     gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-    print(img_file1, img_file2)
+    #print(img_file1, img_file2)
     
     # チェスボードのコーナーを探す
     ret1, corners1 = cv2.findChessboardCorners(gray1, pattern_size)
@@ -82,3 +82,22 @@ retval, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E, F = cv2
 print("Rotation Matrix:\n", R)
 print("Translation Vector:\n", T)
 # 必要に応じて他のパラメータ（E, F）を保存または使用
+# RとTをファイルに保存
+np.save('R.npy', R)
+print("R saved!")
+np.save('T.npy', T)
+print("T saved!")
+
+R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(mtx_a, dist_a, mtx_b, dist_b, gray1.shape[::-1], R, T)#射影行列の計算
+
+print("P1:\n", P1)
+print("P2:\n", P2)
+
+np.save('P1.npy', P1)
+print("P1 saved!")
+np.save('P2.npy', P2)
+print("P2 saved!")
+
+
+
+
