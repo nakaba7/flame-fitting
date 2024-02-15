@@ -5,7 +5,12 @@ import argparse
 
 """
 顔画像に対して特徴点を手動でアノテーションするスクリプト
-特徴点の座標はpoints_a_{name}.npy, points_b_{name}.npyに保存される
+
+-特徴点の数はLAMDMARK_NUMで指定し, その数だけ特徴点をクリックすることでアノテーションが完了する．
+それ以外の場合は再度クリックを求める．
+-顔が写っていない画像はqを押すことでスキップできる.
+-特徴点の座標はpoints_a_{name}.npy, points_b_{name}.npyに保存される.
+-特徴点を付けた画像はFaceImages/{name}/{name}_Annotated/に保存される.
 
 Usage:
     python FaceLandmark_manual.py -n [name]
