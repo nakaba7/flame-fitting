@@ -33,13 +33,13 @@ def main(args):
     T = np.load("T.npy")
     """
     # カメラa, bの射影行列
-    P1 = np.load("P1.npy")
-    P2 = np.load("P2.npy")
+    P1 = np.load("Parameters/P1.npy")
+    P2 = np.load("Parameters/P2.npy")
     #↑計算で出すか，キャリブレーションで出したものを使うか
 
     # 画像1, 2における特徴点の座標
-    points1 = np.load(f"points_a_{name}.npy")
-    points2 = np.load(f"points_b_{name}.npy")
+    points1 = np.load(f"Points/points_a_{name}.npy")
+    points2 = np.load(f"Points/points_b_{name}.npy")
 
     # 三次元座標を計算
     for point1, point2 in zip(points1, points2):

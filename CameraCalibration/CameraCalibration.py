@@ -60,8 +60,8 @@ def main(args):
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
     # 計算結果を保存
-    np.save(os.path.join(f"{folder_name}_mtx"), mtx)  # カメラ行列
-    np.save(os.path.join(f"{folder_name}_dist"), dist.ravel())  # 歪みパラメータ
+    np.save(os.path.join(f"Parameters/{folder_name}_mtx"), mtx)  # カメラ行列
+    np.save(os.path.join(f"Parameters/{folder_name}_dist"), dist.ravel())  # 歪みパラメータ
     # 計算結果を表示
     print("RMS = ", ret)
     print("mtx = \n", mtx)

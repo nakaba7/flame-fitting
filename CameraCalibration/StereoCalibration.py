@@ -35,10 +35,10 @@ if not os.path.exists(output_folder):
 
 # キャリブレーションデータの読み込み
 # ここでは、mtx_a, dist_a, mtx_b, dist_b, R, T などがキャリブレーションから得られたパラメータとします。
-mtx_a = np.load("ChessBoard_a_mtx.npy")
-dist_a = np.load("ChessBoard_a_dist.npy")
-mtx_b = np.load("ChessBoard_b_mtx.npy")
-dist_b = np.load("ChessBoard_b_dist.npy")
+mtx_a = np.load("Parameters/ChessBoard_a_mtx.npy")
+dist_a = np.load("Parameters/ChessBoard_a_dist.npy")
+mtx_b = np.load("Parameters/ChessBoard_b_mtx.npy")
+dist_b = np.load("Parameters/ChessBoard_b_dist.npy")
 
 # チェスボードの設定
 square_size = 2.5
@@ -83,9 +83,9 @@ print("Rotation Matrix:\n", R)
 print("Translation Vector:\n", T)
 # 必要に応じて他のパラメータ（E, F）を保存または使用
 # RとTをファイルに保存
-np.save('R.npy', R)
+np.save('Parameters/R.npy', R)
 print("R saved!")
-np.save('T.npy', T)
+np.save('Parameters/T.npy', T)
 print("T saved!")
 
 R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(mtx_a, dist_a, mtx_b, dist_b, gray1.shape[::-1], R, T)#射影行列の計算
@@ -93,9 +93,9 @@ R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(mtx_a, dist_a, mtx_b, dist_b, 
 print("P1:\n", P1)
 print("P2:\n", P2)
 
-np.save('P1.npy', P1)
+np.save('Parameters/P1.npy', P1)
 print("P1 saved!")
-np.save('P2.npy', P2)
+np.save('Parameters/P2.npy', P2)
 print("P2 saved!")
 
 

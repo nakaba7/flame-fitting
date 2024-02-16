@@ -13,7 +13,7 @@ For comments or questions, please email us at flame@tue.mpg.de
 import numpy as np
 import chumpy as ch
 from os.path import join
-
+import argparse
 from smpl_webuser.serialization import load_model
 from fitting.landmarks import load_embedding, landmark_error_3d
 from fitting.util import load_binary_pickle, write_simple_obj, safe_mkdir, get_unit_factor
@@ -118,14 +118,18 @@ def fit_lmk3d( lmk_3d,                      # input landmark 3d
 
 # -----------------------------------------------------------------------------
 
-def run_fitting():
+def run_fitting(args):
     # input landmarks
-    lmk_path = './data/scan_lmks.npy'
+    lmk_path = args.i
     # measurement unit of landmarks ['m', 'cm', 'mm']
-    unit = 'm' 
+    unit = 'mm' 
 
     scale_factor = get_unit_factor('m') / get_unit_factor(unit)
-    lmk_3d = scale_factor*np.load(lmk_path)
+    print("scale factor:", scale_factor)
+    lmk_3d = np.load(lmk_path)
+    lmk_3d *= scale_factor
+    lmk_3d[:,2] = -lmk_3d[:,2]
+
     print("loaded 3d landmark from:", lmk_path)
     print("landmark", lmk_3d)
     print("landmark shape", lmk_3d.shape)  
@@ -150,9 +154,9 @@ def run_fitting():
     # shape regularizer (weight higher to regularize face shape more towards the mean)
     weights['shape'] = 1e-3
     # expression regularizer (weight higher to regularize facial expression more towards the mean)
-    weights['expr']  = 1e-3
+    weights['expr']  = 1e-2
     # regularization of head rotation around the neck and jaw opening (weight higher for more regularization)
-    weights['pose']  = 1e-2
+    weights['pose']  = 1e-3
     
     # number of shape and expression parameters (we do not recommend using too many parameters for fitting to sparse keypoints)
     shape_num = 100
@@ -176,11 +180,14 @@ def run_fitting():
                                        shape_num=shape_num, expr_num=expr_num, opt_options=opt_options ) # options
 
     # write result
-    output_path = join( output_dir, 'fit_lmk3d_result.obj' )
+    output_path = join( output_dir, f'fit_lmk3d_{lmk_path[:-4]}.obj' )
+    print("write result to:", output_path)
     write_simple_obj( mesh_v=mesh_v, mesh_f=mesh_f, filepath=output_path, verbose=False )
     
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    run_fitting()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', default='data/scan_lmks.npy', type=str,  help='input numpy file for 3D landmarks')
+    run_fitting(parser.parse_args())
 
