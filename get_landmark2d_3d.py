@@ -14,12 +14,14 @@ Usage:
     python get_landmark2d_3d.py -f <folder_name> -o <output_folder>
     -f: 顔画像が保存されているフォルダのパス
     -o: 2D, 3Dランドマークを保存するフォルダのパス
+
+注意：
+landmark3d は y座標が反転しているので, 使用するときは符号の反転が必要
 """
+fa_2d = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False, device='cuda')
+fa_3d = face_alignment.FaceAlignment(face_alignment.LandmarksType.THREE_D, flip_input=False, device='cuda')
 
 def get_landmark_2d_3d(image_path):
-    fa_2d = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False, device='cuda')
-    fa_3d = face_alignment.FaceAlignment(face_alignment.LandmarksType.THREE_D, flip_input=False, device='cuda')
-
     input = io.imread(image_path)
 
     landmarks_2d_result = fa_2d.get_landmarks(input)
@@ -60,6 +62,9 @@ def main(args):
     print(f"Found {len(images)} images")
     count = 0
     for image_path in images:
+        if count == annotation_num:
+            print("Annotation finished")
+            break
         landmarks_2d, landmarks_3d = get_landmark_2d_3d(image_path)
         if landmarks_2d is None or landmarks_3d is None:
             continue
@@ -72,11 +77,10 @@ def main(args):
         #print(f"2D landmarks saved to {output_file_path_2d}")
         np.save(output_file_path_3d, landmarks_3d)
         #print(f"3D landmarks saved to {output_file_path_3d}")
-        print(f"Image {count+1}/{annotation_num} processed")
+        if count % 10 == 9:
+            print(f"Image {count+1}/{annotation_num} processed")
         count += 1
-        if count == annotation_num:
-            print("Annotation finished")
-            break
+        
 
 
 if __name__ == '__main__':
