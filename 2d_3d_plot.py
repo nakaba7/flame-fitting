@@ -4,6 +4,11 @@ from mpl_toolkits.mplot3d import Axes3D
 import glob
 import os
 
+"""
+npyファイルに保存された2D, 3Dランドマークをプロットするスクリプト
+qを押すとウィンドウが閉じ, 次の画像のプロットに移る
+"""
+
 def plot_landmarks(landmarks_2d, landmarks_3d):
     fig = plt.figure(figsize=(14, 7))
     
