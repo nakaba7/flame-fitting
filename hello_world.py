@@ -48,12 +48,9 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------
 
     # Assign random pose and shape parameters
-    #model.pose[:]  = np.random.randn(model.pose.size) * 0.02
-    model.pose[:]  = np.random.randn(model.pose.size)*0.1
-    #model.betas[:100] = np.random.randn(100) * 0.6
-    model.betas[:100] = np.random.randn(100)
-    #model.betas[300:350] = np.full(50,0)
-    model.betas[300:350] = np.random.randn(50)
+    model.pose[:]  = np.random.randn(model.pose.size) * 0.02
+    model.betas[:100] = np.random.randn(100) * 0.06
+    model.betas[300:350] = np.random.randn(50) * 0.06
     #print(model.betas[:100])
     #print(model.betas[300:350])
     #print(model.shapedirs[:,:,0:300])
@@ -67,4 +64,3 @@ if __name__ == '__main__':
     #np.save('CameraCalibration/hello_world_expCoeff.npy', model.betas[300:])
     #print('output coefficients saved to: ', 'CameraCalibration/hello_world_expCoeff.npy')
     print('output mesh saved to: ', outmesh_path) 
-

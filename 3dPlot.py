@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 npyファイルを読み込んで3Dプロットするスクリプト
 """
 
-data = np.load("surprised.npy")
+data = np.load("output_landmark/angry_3d.npy")
 print(data)
 data[:, 2] = -data[:, 2]
 #print(data)
