@@ -6,6 +6,11 @@ import argparse
 """
 顔画像に対して、手動で顔の特徴点をアノテーションするサンプルコード。
 コマンドライン引数でフォルダ名とアノテーションする画像の枚数を指定する。
+
+usage:
+$ python manual_annotation.py -f [folder_name] -n [number_of_images]
+-f: フォルダ名
+-n: アノテーションする画像の枚数
 """
 
 def manual_annotation(input_path, output_img_path, output_csv_path):

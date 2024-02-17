@@ -40,7 +40,7 @@ def main():
     model_path = '2d_2_3d_model.pth'
     epoch_num = 100
     learning_rate = 0.001
-    batch_size = 16
+    batch_size = 64
 
     # GPUが利用可能か確認
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

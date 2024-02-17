@@ -1,4 +1,6 @@
 *.pyc
 *.jpg
+*.png
+*.jpeg
 *.csv
 CopyImages_via_samba.py
