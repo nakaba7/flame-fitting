@@ -6,6 +6,7 @@ warnings.filterwarnings('ignore')
 import glob
 import argparse
 import os
+from tqdm import tqdm
 
 """
 顔画像から2D, 3Dランドマークを検出し, それぞれnpyファイルに保存するスクリプト
@@ -23,7 +24,7 @@ fa_3d = face_alignment.FaceAlignment(face_alignment.LandmarksType.THREE_D, flip_
 
 def get_landmark_2d_3d(image_path):
     input = io.imread(image_path)
-
+    height, width, _ = input.shape
     landmarks_2d_result = fa_2d.get_landmarks(input)
     landmarks_3d_result = fa_3d.get_landmarks(input)
 
@@ -42,6 +43,12 @@ def get_landmark_2d_3d(image_path):
         return None, None
     landmarks_2d = landmarks_2d[17:]
     landmarks_3d = landmarks_3d[17:]
+    if height > width:#np行列をサイズで正規化(解像度の違いに対応するため)
+        landmarks_2d /= height
+        landmarks_3d /= height
+    else:
+        landmarks_2d /= width
+        landmarks_3d /= width
 
     return landmarks_2d, landmarks_3d
 
@@ -53,6 +60,9 @@ def main(args):
         os.makedirs(output_folder)
     output_folder_2d = os.path.join(output_folder, "2d")
     output_folder_3d = os.path.join(output_folder, "3d")
+    if args.t:
+        output_folder_2d = os.path.join(output_folder, "test_2d")
+        output_folder_3d = os.path.join(output_folder, "test_3d")
     if not os.path.exists(output_folder_2d):
         os.makedirs(output_folder_2d)
     if not os.path.exists(output_folder_3d):
@@ -60,16 +70,15 @@ def main(args):
     print(f"Start searching {folder_name} for img files...")
     images = glob.glob(f'{folder_name}/*.jpg')
     print(f"Found {len(images)} images")
-    count = 0
-    for image_path in images:
-        if count == annotation_num:
-            print("Annotation finished")
-            break
-        landmarks_2d, landmarks_3d = get_landmark_2d_3d(image_path)
+    #count = 0
+    if annotation_num > len(images):
+        annotation_num = len(images)
+    for i in tqdm(range(annotation_num)):
+        landmarks_2d, landmarks_3d = get_landmark_2d_3d(images[i])
         if landmarks_2d is None or landmarks_3d is None:
             continue
         # ファイル名の取得（拡張子なし）
-        filename_without_ext = os.path.splitext(os.path.basename(image_path))[0]
+        filename_without_ext = os.path.splitext(os.path.basename(images[i]))[0]
         # 出力ファイルパスの生成
         output_file_path_2d = os.path.join(output_folder_2d,f"{filename_without_ext}.npy")
         output_file_path_3d = os.path.join(output_folder_3d,f"{filename_without_ext}.npy")
@@ -77,15 +86,14 @@ def main(args):
         #print(f"2D landmarks saved to {output_file_path_2d}")
         np.save(output_file_path_3d, landmarks_3d)
         #print(f"3D landmarks saved to {output_file_path_3d}")
-        if count % 10 == 9:
-            print(f"Image {count+1}/{annotation_num} processed")
-        count += 1
-        
+
+
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', default = 'img_align_celeba', type=str,  help='Face images folder path')
     parser.add_argument('-o', default = 'output_landmark', type=str,  help='Output folder path')
-    parser.add_argument('-n', default=10, type=int,  help='Number of images to be annotated')
+    parser.add_argument('-n', default=1000000, type=int,  help='Number of images to be annotated')
+    parser.add_argument('-t', default=False, type=bool,  help='landmark2d for test data, not for training data')
     main(parser.parse_args())

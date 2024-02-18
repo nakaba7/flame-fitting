@@ -48,6 +48,10 @@ def main():
     for f2d, f3d in zip(files_2d, files_3d):
         landmarks_2d = np.load(f2d)
         landmarks_3d = np.load(f3d)
+        print("2d:",landmarks_2d)
+        print("3d:",landmarks_3d)
+        if landmarks_3d.shape[0] == 1:
+            landmarks_3d = np.squeeze(landmarks_3d)
         landmarks_2d[:, 1] = -landmarks_2d[:, 1]# 画像座標系とプロット座標系を合わせるためにy座標を反転
         landmarks_3d[:, 1] = -landmarks_3d[:, 1]
         print("loaded", f2d, f3d)
