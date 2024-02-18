@@ -3,4 +3,5 @@
 *.png
 *.jpeg
 *.csv
+*.npy
 CopyImages_via_samba.py
