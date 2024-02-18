@@ -1,5 +1,9 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F 
+
+# GPUが利用可能か確認
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # LSTMモデル定義
 class LSTMFeatureMappingModel(nn.Module):
@@ -7,22 +11,31 @@ class LSTMFeatureMappingModel(nn.Module):
         super(LSTMFeatureMappingModel, self).__init__()
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
-        
-        # LSTMレイヤー
-        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True)
-        
-        # 出力層
-        self.fc = nn.Linear(hidden_dim, output_dim)
+        self.input_layer = nn.Linear(input_dim, hidden_dim)
+        self.lstm = nn.LSTM(hidden_dim, hidden_dim, num_layers, batch_first=True)
+        self.output_layer = nn.Linear(hidden_dim, output_dim)
+        self.dropped = nn.Dropout(0.3)
+        self.batch_norm = nn.BatchNorm1d(hidden_dim)
+        self.hidden_layer = nn.Linear(hidden_dim, hidden_dim)
 
     def forward(self, x):
         # LSTMの隠れ状態とセル状態の初期化
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
         c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
-        
-        # LSTM層
-        out, _ = self.lstm(x, (h0, c0))
-        
-        # 出力層
-        out = self.fc(out)
-        return out
+        #x = x.unsqueeze(0)
+        #print(x.shape)
+        x = self.input_layer(x)
+        #x = self.batch_norm(x)
+        x = F.relu(x)
+        x = self.dropped(x)
+        x = self.hidden_layer(x)
+        #x = self.batch_norm(x)
+        x = F.relu(x)
+        x = self.dropped(x)
+        #print(x.shape)
+        x, _ = self.lstm(x, (h0, c0))
+        x = F.relu(x)
+        x = self.dropped(x)
+        x = self.output_layer(x)
+        return x
 

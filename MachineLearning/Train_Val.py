@@ -7,21 +7,41 @@ from torch.utils.data import Dataset, DataLoader
 from EarlyStopping import EarlyStopping
 from LSTMFeatureMappingModel import LSTMFeatureMappingModel
 from tqdm import tqdm
+from torch.optim.lr_scheduler import StepLR
+import wandb
+
 
 class CustomDataset(Dataset):
-    def __init__(self, input_dir, target_dir):
-        self.inputs = self.load_data(input_dir)
-        self.targets = self.load_data(target_dir)
+    def __init__(self, input_dir, target_dir, data_size):
+        self.datasize = data_size
+        self.inputs = self.load_data(input_dir, f"inputs_cache_{data_size}.npy")
+        self.targets = self.load_data(target_dir, f"targets_cache_{data_size}.npy")
 
-    def load_data(self, directory):
-        files = sorted(os.listdir(directory))  # ファイルリストを取得し、ソート
-        data_list = []
-        for file in files:
-            if file.endswith('.npy'):
-                data_path = os.path.join(directory, file)
-                data = np.load(data_path)
-                data_list.append(data)
-        return np.concatenate(data_list, axis=0)
+    def load_data(self, directory, cache_file_name):
+        cache_path = os.path.join("output_landmark", cache_file_name)
+        if os.path.exists(cache_path):
+            print(f"Loading cached data from {cache_path}")
+            data_list = np.load(cache_path)
+        else:
+            print(f"Cache not found. Loading data from {directory}")
+            files = sorted(os.listdir(directory))
+            data_list = []
+            count = 0
+            for file in tqdm(files):
+                if count == self.datasize:
+                    break
+                if file.endswith('.npy'):
+                    data_path = os.path.join(directory, file)
+                    data = np.load(data_path)
+                    if data.shape[0] > 51:
+                        data = data[:51]
+                    elif data.shape[0] < 51:
+                        break
+                    data_list.append(data)
+                    count += 1
+            data_list = np.stack(data_list)
+            np.save(cache_path, data_list)  # キャッシュとして保存
+        return data_list
 
     def __len__(self):
         return len(self.inputs)
@@ -31,6 +51,7 @@ class CustomDataset(Dataset):
         y = torch.tensor(self.targets[idx], dtype=torch.float32)
         return x, y
 
+
 def main():
     # パラメータ設定
     input_dim = 2
@@ -38,9 +59,24 @@ def main():
     output_dim = 3
     num_layers = 2
     model_path = '2d_2_3d_model.pth'
-    epoch_num = 100
-    learning_rate = 0.001
+    epoch_num = 1000
+    learning_rate = 0.0001
     batch_size = 64
+    dataset_size = 100000
+    wandb.init(
+        project="2D_3d_landmark",
+        config={
+            "input_dim": input_dim,
+            "hidden_dim": hidden_dim,
+            "output_dim": output_dim,
+            "num_layers": num_layers,
+            "model_path": model_path,
+            "epoch_num": epoch_num,
+            "learning_rate": learning_rate,
+            "batch_size": batch_size,
+            "dataset_size": dataset_size
+        }
+        )
 
     # GPUが利用可能か確認
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -48,7 +84,8 @@ def main():
     # データセットとデータローダーの準備
     input_dir = '../output_landmark/2d'
     target_dir = '../output_landmark/3d'
-    dataset = CustomDataset(input_dir, target_dir)
+    dataset = CustomDataset(input_dir, target_dir, dataset_size)
+    print("dataset size:",len(dataset))
     train_size = int(len(dataset) * 0.8)# 80%を訓練データに
     val_size = len(dataset) - train_size # 残りを検証データに
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
@@ -63,12 +100,16 @@ def main():
     # 損失関数と最適化関数
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # 10エポックごとに学習率を0.1倍する
+    scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
 
     # 訓練ループ
     for epoch in tqdm(range(epoch_num)):
         model.train()  # モデルを訓練モードに設定
         for inputs, targets in train_dataloader:
             inputs, targets = inputs.to(device), targets.to(device)
+            #print("input: ", inputs.shape)
+            #print("target: ", targets.shape)
             optimizer.zero_grad()        # 勾配をゼロにする
             outputs = model(inputs)       # モデルによる予測
             loss = criterion(outputs, targets)  # 損失の計算
@@ -76,6 +117,7 @@ def main():
             optimizer.step()             # パラメータ更新
         
         print(f'Epoch {epoch+1}, Loss: {loss.item()}')
+        wandb.log({"Training Loss": loss.item()})
 
         # 評価モード
         model.eval()  # モデルを評価モードに設定
@@ -91,6 +133,8 @@ def main():
                 print("Early Stopping!")
                 break
         print(f'Epoch {epoch+1}, Validation Loss: {val_loss}')
+        wandb.log({"Validation Loss": val_loss})
+        scheduler.step()
 
 if __name__ == '__main__':
     main()
