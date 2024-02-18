@@ -5,6 +5,7 @@ import numpy as np
 import os
 from MachineLearning.LSTMFeatureMappingModel import LSTMFeatureMappingModel
 from Plot2d_3d import plot_landmarks
+from Plot3d_3d import plot_landmarks3d_double
 import glob
 
 """
@@ -14,7 +15,7 @@ import glob
 def convert_2d_3d(model_path, landmark_2d):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_dim = 2
-    hidden_dim = 128
+    hidden_dim = 256
     output_dim = 3
     num_layers = 2
     model = LSTMFeatureMappingModel(input_dim, hidden_dim, output_dim, num_layers).to(device)
@@ -43,8 +44,11 @@ def main():
         print("target:", target_3d)
         np.save(f'{output_dir}/{os.path.basename(input)}', landmark_3d.cpu().detach().numpy())
         # 勾配追跡を停止し、CUDA TensorをCPUに移動し、NumPy配列に変換
-        #landmark_3d_np = landmark_3d.detach().cpu().numpy()
+        landmark_3d_np = landmark_3d.detach().cpu().numpy()
+        if landmark_3d_np.shape[0] == 1:
+            landmark_3d_np = np.squeeze(landmark_3d_np)
         #plot_landmarks(landmark_2d, landmark_3d_np)
+        plot_landmarks3d_double(landmark_3d_np, target_3d)
 
 
 

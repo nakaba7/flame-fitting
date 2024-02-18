@@ -15,27 +15,35 @@ class LSTMFeatureMappingModel(nn.Module):
         self.lstm = nn.LSTM(hidden_dim, hidden_dim, num_layers, batch_first=True)
         self.output_layer = nn.Linear(hidden_dim, output_dim)
         self.dropped = nn.Dropout(0.3)
-        self.batch_norm = nn.BatchNorm1d(hidden_dim)
+        self.batch_norm = nn.BatchNorm1d(51)
         self.hidden_layer = nn.Linear(hidden_dim, hidden_dim)
 
     def forward(self, x):
         # LSTMの隠れ状態とセル状態の初期化
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
         c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
-        #x = x.unsqueeze(0)
-        #print(x.shape)
         x = self.input_layer(x)
-        #x = self.batch_norm(x)
+        x = self.batch_norm(x)
         x = F.relu(x)
         x = self.dropped(x)
+
         x = self.hidden_layer(x)
-        #x = self.batch_norm(x)
+        x = self.batch_norm(x)
         x = F.relu(x)
         x = self.dropped(x)
-        #print(x.shape)
+        """
+        x = self.hidden_layer(x)
+        x = x.reshape(b, s, self.hidden_dim)
+        x = x.permute(0,2,1)
+        x = self.batch_norm(x)
+        x = x.permute(0,2,1)
+        x = F.relu(x)
+        x = self.dropped(x)
+        """
         x, _ = self.lstm(x, (h0, c0))
         x = F.relu(x)
-        x = self.dropped(x)
+
         x = self.output_layer(x)
+
         return x
 

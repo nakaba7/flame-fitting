@@ -52,16 +52,22 @@ class CustomDataset(Dataset):
         y = torch.tensor(self.targets[idx], dtype=torch.float32)
         return x, y
 
+def weighted_mse_loss(input, target, weight=10.0):
+    # input, targetの形状: [BatchSize, SequenceSize, 3]
+    # 3次元目の誤差に重みをかける
+    loss = (input - target) ** 2
+    loss[:,:,2] *= weight  # 3次元目の誤差に重みをかける
+    return loss.mean()
 
 def main():
     # パラメータ設定
     input_dim = 2
-    hidden_dim = 128
+    hidden_dim = 256
     output_dim = 3
     num_layers = 2
     model_path = '2d_2_3d_model.pth'
     epoch_num = 1000
-    learning_rate = 0.0001
+    learning_rate = 1e-5
     batch_size = 64
     dataset_size = 100000
     wandb.init(
@@ -96,10 +102,12 @@ def main():
 
     # モデルインスタンスを作成し、GPUに移動
     model = LSTMFeatureMappingModel(input_dim, hidden_dim, output_dim, num_layers).to(device)
-    earlystopping = EarlyStopping(patience=10, verbose=True, path=model_path)
+    earlystopping = EarlyStopping(patience=20, verbose=True, path=model_path)
 
     # 損失関数と最適化関数
-    criterion = nn.MSELoss()
+    #criterion = nn.L1Loss()
+    criterion = nn.HuberLoss()
+    #criterion = weighted_mse_loss
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # 10エポックごとに学習率を0.1倍する
     scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
@@ -133,7 +141,7 @@ def main():
             if earlystopping.early_stop:
                 print("Early Stopping!")
                 break
-        print(f'Epoch {epoch+1}, Validation Loss: {val_loss}')
+        print(f'Epoch {epoch+1}, Validation Loss: {val_loss}, lr: {scheduler.get_last_lr()}')
         wandb.log({"Validation Loss": val_loss})
         scheduler.step()
 

@@ -1,5 +1,13 @@
-import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F 
 
-a = np.load("../output_landmark/inputs_cache_100000_normalized.npy")
-print("a: \n",a)
-print("a.shape: \n",a.shape)
+# With Learnable Parameters
+m = nn.BatchNorm1d(4)
+
+input = torch.randn(2,4,3)
+print("input: ", input)
+output = m(input)
+
+
+print("output: ", output)
