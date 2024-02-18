@@ -14,11 +14,12 @@ import wandb
 class CustomDataset(Dataset):
     def __init__(self, input_dir, target_dir, data_size):
         self.datasize = data_size
-        self.inputs = self.load_data(input_dir, f"inputs_cache_{data_size}.npy")
-        self.targets = self.load_data(target_dir, f"targets_cache_{data_size}.npy")
+        self.inputs = self.load_data(input_dir, f"inputs_cache_{data_size}_normalized.npy")
+        self.targets = self.load_data(target_dir, f"targets_cache_{data_size}_normalized.npy")
 
     def load_data(self, directory, cache_file_name):
-        cache_path = os.path.join("output_landmark", cache_file_name)
+        cache_path = os.path.join(directory, cache_file_name)
+        print(f"cache_path: {cache_path}")
         if os.path.exists(cache_path):
             print(f"Loading cached data from {cache_path}")
             data_list = np.load(cache_path)
@@ -82,8 +83,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # データセットとデータローダーの準備
-    input_dir = '../output_landmark/2d'
-    target_dir = '../output_landmark/3d'
+    input_dir = '../output_landmark'
+    target_dir = '../output_landmark'
     dataset = CustomDataset(input_dir, target_dir, dataset_size)
     print("dataset size:",len(dataset))
     train_size = int(len(dataset) * 0.8)# 80%を訓練データに
@@ -101,7 +102,7 @@ def main():
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # 10エポックごとに学習率を0.1倍する
-    scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
 
     # 訓練ループ
     for epoch in tqdm(range(epoch_num)):

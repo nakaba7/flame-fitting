@@ -4,8 +4,12 @@ import torch.optim as optim
 import numpy as np
 import os
 from MachineLearning.LSTMFeatureMappingModel import LSTMFeatureMappingModel
-from Plot_2d_3d import plot_landmarks
+from Plot2d_3d import plot_landmarks
 import glob
+
+"""
+学習済みモデルを用いて2Dランドマークを3Dランドマークに変換するスクリプト
+"""
 
 def convert_2d_3d(model_path, landmark_2d):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
