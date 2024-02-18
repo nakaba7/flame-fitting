@@ -1,10 +1,16 @@
-from skimage import io
 import numpy as np
-import glob
+import os
 
-images = glob.glob('img_align_celeba/*.jpg')
-print(len(images))
-for i in range(len(images)):
-    print(images[i])
-    if i > 3:
-        break
+path = sorted(os.listdir("output_landmark/2d"))
+outpath = sorted(os.listdir("output_landmark/3d"))
+print(path==outpath)
+#print("path = ",path)
+"""
+path = 
+a = np.load("output_landmark/2d/000001.npy")
+print("before: ",a)
+print(a.shape)
+a = a[:51]
+print("after: ",a)
+print(a.shape)
+"""

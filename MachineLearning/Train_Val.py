@@ -25,7 +25,7 @@ class CustomDataset(Dataset):
             data_list = np.load(cache_path)
         else:
             print(f"Cache not found. Loading data from {directory}")
-            files = sorted(os.listdir(directory))
+            files = sorted(os.listdir(directory))# ファイル名をソート
             data_list = []
             count = 0
             for file in tqdm(files):
@@ -34,7 +34,7 @@ class CustomDataset(Dataset):
                 if file.endswith('.npy'):
                     data_path = os.path.join(directory, file)
                     data = np.load(data_path)
-                    if data.shape[0] > 51:
+                    if data.shape[0] > 51:# 特徴点の数を51に統一
                         data = data[:51]
                     elif data.shape[0] < 51:
                         break
