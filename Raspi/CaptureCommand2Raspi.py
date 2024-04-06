@@ -5,7 +5,7 @@ Raspberry Piにコマンドを送信するスクリプト
 """
 
 # Raspberry Piのホスト名またはIPアドレスとポート番号
-HOST = "192.168.11.57"  # Raspberry Piのホスト名またはIPアドレスを設定
+HOST = "192.168.100.34"  # Raspberry Piのホスト名またはIPアドレスを設定
 PORT = 46361              # Raspberry Pi側のスクリプトで使用しているポート番号
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

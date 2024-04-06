@@ -56,7 +56,7 @@ def manual_annotation(input_path, output_img_path, output_csv_path):
 def main(args):
     folder_name = args.f
     manual_img_num = args.n
-    input_Imagess_path = os.listdir(f'FaceData/{folder_name}')
+    input_Imagess_path = os.listdir(f'{folder_name}')
     output_img_dir = f'FaceData/{folder_name}_Annotated/Images'
     output_csv_dir = f'FaceData/{folder_name}_Annotated/CSVs'
     os.makedirs(output_img_dir, exist_ok=True)
@@ -66,7 +66,7 @@ def main(args):
         if img_count == manual_img_num:
             print('Manual annotation finished')
             break
-        input_img = os.path.join(f'FaceData/{folder_name}', img)
+        input_img = os.path.join(f'{folder_name}', img)
         manual_annotation(input_img, os.path.join(output_img_dir, f'{img[:-4]}_annotated.jpg'), os.path.join(output_csv_dir, f'{img[:-4]}_annotated.csv'))
         img_count += 1
 

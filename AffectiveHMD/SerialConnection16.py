@@ -1,6 +1,6 @@
 import serial
 import time
-import  matplotlib.pyplot as plt
+
 
 class SerialConnection:
 	def __init__(self, portNum, rate):
@@ -60,3 +60,10 @@ class SerialConnectionExceptDisplay:
 
 	def getSensorData(self):
 		return self.values
+
+if __name__ == '__main__':
+	serialConnection = SerialConnection('COM10', 115200)
+	while True:
+		serialConnection.UpdateSensorData()
+		print(serialConnection.getSensorData())
+		
