@@ -150,7 +150,7 @@ def run_fitting(args):
     # weights
     weights = {}
     # landmark term
-    weights['lmk']   = 1.0   
+    weights['lmk']   = 1.0
     # shape regularizer (weight higher to regularize face shape more towards the mean)
     weights['shape'] = 1e-3
     # expression regularizer (weight higher to regularize facial expression more towards the mean)

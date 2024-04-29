@@ -7,15 +7,31 @@ import numpy as np
 import glob
 import argparse
 
+"""
+カメラキャリブレーションを行うスクリプト．1つのカメラずつで行う．カメラ行列と歪みパラメータを保存する．
+
+Usage:
+    python CameraCalibration.py -f eye_left
+    python CameraCalibration.py -f eye_right
+    python CameraCalibration.py -f mouth_left
+    python CameraCalibration.py -f mouth_right
+
+Args:  
+    -f: Choose left or right or mouth. Specify the camera to calibrate.
+"""
+
 def main(args):
-    if args.f != 'a' and args.f != 'b':
-        print("Invalid args. Choose a or b.")
+    if args.f != 'eye_left' and args.f != 'eye_right' and args.f != 'mouth_left' and args.f != 'mouth_right':
+        print("Invalid args. Choose eye_left, eye_right, mouth_left or mouth_right.")
         exit() 
     square_size = 2.5      # 正方形の1辺のサイズ[cm]
     pattern_size = (6, 8)  # 交差ポイントの数
     folder_name = f"ChessBoard_{args.f}"
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+        
     print("Use images in ",folder_name)
-    reference_img = 61 # 参照画像の枚数
+    reference_img = 30 # 参照画像の枚数
 
     # 新しいフォルダーの名前
     output_folder_name = "Processed_Images"
@@ -39,7 +55,7 @@ def main(args):
         ret, corners = cv2.findChessboardCorners(gray, pattern_size)
         if ret:
             print("detected corner!")
-            print(f"{len(objpoints)+1}/{reference_img}")
+            print(f"{len(objpoints)+1}:{filepath}")
             term = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT, 30, 0.1)
             cv2.cornerSubPix(gray, corners, (5, 5), (-1, -1), term)
             imgpoints.append(corners.reshape(-1, 2))
@@ -69,5 +85,5 @@ def main(args):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', default='a', type=str,  help='whether ChessBoard_a or ChessBoard_b')
+    parser.add_argument('-f', default='hoge', type=str,  help='whether ChessBoard_eye_left, ChessBoard_eye_right, ChessBoard_mouth_left or ChessBoard_mouth_right. Choose eye_left, eye_right, mouth_left or mouth_right.')
     main(parser.parse_args())

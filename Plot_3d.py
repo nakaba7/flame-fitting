@@ -1,36 +1,50 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import glob
 
-"""
-npyファイルを読み込んで3Dプロットするスクリプト
-"""
+def plot_landmarks(landmarks_3d):
+    fig = plt.figure(figsize=(12, 6))
+    
+    # 3Dランドマークのプロット
+    ax1 = fig.add_subplot(122, projection='3d')
+    ax1.scatter(landmarks_3d[:, 0], landmarks_3d[:, 1], landmarks_3d[:, 2])
+    for i, txt in enumerate(range(landmarks_3d.shape[0])):
+        ax1.text(landmarks_3d[i, 0], landmarks_3d[i, 1], landmarks_3d[i, 2], txt)
+    ax1.set_xlabel('X')
+    ax1.set_ylabel('Y')
+    ax1.set_zlabel('Z')
+    ax1.set_title('3D Landmarks')
 
-data = np.load("output_landmark/angry_3d.npy")
-print(data)
-data[:, 2] = -data[:, 2]
-#print(data)
+    # 軸の範囲を計算し設定
+    all_data = np.vstack([landmarks_3d[:, 0], landmarks_3d[:, 1], landmarks_3d[:, 2]])
+    max_range = np.array([all_data.max() - all_data.min()]).max() / 2.0
+    mid_x = (max(landmarks_3d[:, 0]) + min(landmarks_3d[:, 0])) * 0.5
+    mid_y = (max(landmarks_3d[:, 1]) + min(landmarks_3d[:, 1])) * 0.5
+    mid_z = (max(landmarks_3d[:, 2]) + min(landmarks_3d[:, 2])) * 0.5
+    ax1.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax1.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax1.set_zlim(mid_z - max_range, mid_z + max_range)
 
-# プロットを初期化
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+    # キー入力イベントを処理する関数
+    def on_key(event):
+        if event.key == 'q':
+            plt.close(fig)
+    
+    # キープレスイベントに反応するように設定
+    fig.canvas.mpl_connect('key_press_event', on_key)
 
-# X, Y, Z のデータを抽出
-X = data[:, 0]
-Y = data[:, 1]
-Z = data[:, 2]
+    plt.show()
 
-# 散布図としてプロット
-scatter = ax.scatter(X, Y, Z)
+def main():
+    files_3d = sorted(glob.glob('output_landmark/*.npy'))
 
-# ラベルを設定
-ax.set_xlabel('X Label')
-ax.set_ylabel('Y Label')
-ax.set_zlabel('Z Label')
+    for f3d in files_3d:
+        landmarks_3d = np.load(f3d)
+        if landmarks_3d.shape[0] == 1:
+            landmarks_3d = np.squeeze(landmarks_3d)
+        landmarks_3d[:, 1] = -landmarks_3d[:, 1]  # Y軸反転
+        print("loaded", f3d)
+        plot_landmarks(landmarks_3d)
 
-# 各点の近くにインデックス番号を表示
-for i in range(len(X)):
-    ax.text(X[i], Y[i], Z[i], f'{i}', color='blue', fontsize=9)
-
-# 表示
-plt.show()
+if __name__ == '__main__':
+    main()

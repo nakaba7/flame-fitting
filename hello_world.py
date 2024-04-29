@@ -17,11 +17,6 @@ from os.path import join
 from smpl_webuser.serialization import load_model
 from fitting.util import write_simple_obj, safe_mkdir
 
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import figure
-import numpy as np
-from matplotlib.animation import FuncAnimation
 
 # -----------------------------------------------------------------------------
 
@@ -48,9 +43,9 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------
 
     # Assign random pose and shape parameters
-    model.pose[:]  = np.random.randn(model.pose.size) * 0.02
+    model.pose[:]  = np.random.randn(model.pose.size) * 0
     model.betas[:100] = np.random.randn(100) * 0.06
-    model.betas[300:350] = np.random.randn(50) * 0.06
+    model.betas[300:350] = np.random.randn(50)
     #print(model.betas[:100])
     #print(model.betas[300:350])
     #print(model.shapedirs[:,:,0:300])
