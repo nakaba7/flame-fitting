@@ -21,7 +21,7 @@ def create_jaw_array(jaw_opening_factor, jaw_shift_factor, jaw_vertical_factor):
     return np.array([0, 0, 0, np.abs(np.random.randn() * jaw_opening_factor), np.random.randn() * jaw_shift_factor, np.random.randn() * jaw_vertical_factor], dtype=np.float32)
 
 #顔形状，表情，姿勢パラメータを指定
-def set_params(batchsize):
+def set_params(batchsize, jaw_opening_factor=0.5, jaw_shift_factor=0.1, jaw_vertical_factor=0.1):
     shape_params = torch.zeros(batchsize, 100).cuda()
     
     # pose_params_numpy[:, :3] : global rotation
@@ -29,7 +29,7 @@ def set_params(batchsize):
     #[0,0,0,口の開き具合(正が開く),左右方向への曲げ(正が左，負が右), 上下方向への曲げ(正が左，負が右)]
 
     #姿勢，顎のパラメータを指定
-    pose_params_numpy = np.array([create_jaw_array(0.5, 0.1, 0.1) for _ in range(batchsize)], dtype=np.float32)
+    pose_params_numpy = np.array([create_jaw_array(jaw_opening_factor, jaw_shift_factor, jaw_vertical_factor) for _ in range(batchsize)], dtype=np.float32)
     pose_params = torch.tensor(pose_params_numpy, dtype=torch.float32).cuda()
 
     #pose_params = torch.zeros(batchsize, 6, dtype=torch.float32).cuda()
@@ -58,8 +58,6 @@ def main():
     if config.optimize_eyeballpose and config.optimize_neckpose:
         print("Optimizing for eyeball and neck pose")
         neck_pose = torch.zeros(batchsize, 3).cuda()
-        #eye_params_numpy = np.array([np.random.randn(6) for _ in range(batchsize)], dtype=np.float32)
-        #eye_pose = torch.tensor(eye_params_numpy, dtype=torch.float32).cuda()
         eye_pose = torch.zeros(batchsize, 6).cuda()
         vertice, landmark = flamelayer(
             shape_params, expression_params, pose_params, neck_pose, eye_pose

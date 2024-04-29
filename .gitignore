@@ -4,5 +4,6 @@
 *.jpeg
 *.csv
 *.npy
+*.obj
 CopyImages_via_samba.py
 MachineLearning/wandb/*
