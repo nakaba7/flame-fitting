@@ -1,20 +1,20 @@
+import numpy as np
+import torch
+import trimesh
+from os.path import join
+from flame_pytorch import FLAME, get_config
+from tqdm import tqdm
+
 """
 FLAMEモデルのパラメータを指定して、3Dランドマークを取得するコード
 生成途中でスケーリングファクターを変更することで, jawの偏りをなくす
+outputフォルダにobjファイル, output_landmarkフォルダに3次元np配列のランドマークを保存
+
+Usage:
+    python model2landmark3d.py -b [batchsize]
+Args:
+    -b: バッチサイズ
 """
-import numpy as np
-import pyrender
-import torch
-import trimesh
-
-from os.path import join
-from smpl_webuser.serialization import load_model
-from fitting.util import write_simple_obj, safe_mkdir
-
-from flame_pytorch import FLAME, get_config
-from datetime import datetime
-import os
-from tqdm import tqdm
 
 #poseパラメータの顎に関係する部分を乱数×スケーリングファクターで指定する関数
 def create_jaw_array(jaw_opening_factor, jaw_shift_factor, jaw_vertical_factor):
@@ -77,7 +77,7 @@ def main():
         outmesh_path = join( output_obj_dir, f'output_mesh_{i}.obj')
         # OBJファイルとして保存
         mesh.export(outmesh_path)
-        output_lmk_path = os.path.join(output_lmk_dir,f"lmk_{i}.npy")
+        output_lmk_path = join(output_lmk_dir,f"lmk_{i}.npy")
         np.save(output_lmk_path, landmark[i].detach().cpu().numpy())
         #print('output mesh saved to: ', outmesh_path)
 
