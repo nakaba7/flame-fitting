@@ -58,21 +58,21 @@ parser.add_argument(
 
 parser.add_argument(
     "--optimize_eyeballpose",
-    default=True,  # False for For RingNet project
+    default=False,  # False for For RingNet project
     type=bool,
     help="If true optimize for the eyeball pose.",
 )
 
 parser.add_argument(
     "--optimize_neckpose",
-    default=True,  # False For RingNet project
+    default=False,  # False For RingNet project
     type=bool,
     help="If true optimize for the neck pose.",
 )
 
 parser.add_argument("--num_worker", type=int, default=4, help="pytorch number worker.")
 
-parser.add_argument("--batch_size", type=int, default=8, help="Training batch size.")
+parser.add_argument("-b", type=int, default=8, help="Training batch size.")
 
 parser.add_argument("--ring_margin", type=float, default=0.5, help="ring margin.")
 

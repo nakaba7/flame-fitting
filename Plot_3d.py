@@ -36,7 +36,7 @@ def plot_landmarks(landmarks_3d):
     plt.show()
 
 def main():
-    files_3d = sorted(glob.glob('output_landmark/*.npy'))
+    files_3d = sorted(glob.glob('output_landmark/3d/*.npy'))
 
     for f3d in files_3d:
         landmarks_3d = np.load(f3d)
