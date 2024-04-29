@@ -7,11 +7,12 @@ from tqdm import tqdm
 
 """
 FLAMEモデルのパラメータを指定して、3Dランドマークを取得するコード
+データは loop_num x batchsize 個得られる
 生成途中でスケーリングファクターを変更することで, jawの偏りをなくす
 outputフォルダにobjファイル, output_landmarkフォルダに3次元np配列のランドマークを保存
 
 Usage:
-    python model2landmark3d.py -b [batchsize]
+    python model2landmark3d.py -b [batchsize] -n [loop_num]
 Args:
     -b: バッチサイズ
 """
@@ -46,40 +47,47 @@ def main():
     config = get_config()
     flamelayer = FLAME(config)
     batchsize = config.b
-
-    shape_params, expression_params, pose_params = set_params(batchsize)
-    flamelayer.cuda()
-
-    # FLAMEのforward呼び出し
-    vertice, landmark = flamelayer(
-        shape_params, expression_params, pose_params
-    )
-
-    if config.optimize_eyeballpose and config.optimize_neckpose:
-        print("Optimizing for eyeball and neck pose")
-        neck_pose = torch.zeros(batchsize, 3).cuda()
-        eye_pose = torch.zeros(batchsize, 6).cuda()
-        vertice, landmark = flamelayer(
-            shape_params, expression_params, pose_params, neck_pose, eye_pose
-        )
-    #輪郭のランドマークを削除
-    landmark = landmark[:,17:,:]
+    base_num = 0
+    loop_num = config.n
     output_obj_dir = './output'
     output_lmk_dir = './output_landmark/3d'
 
-    #OBJファイルとして保存
-    for i in tqdm(range(batchsize)):
-        vertices = vertice[i].detach().cpu().numpy().squeeze()  # verticeはFLAMEモデルからの出力
-        faces = flamelayer.faces  # FLAMEモデルの面情報
+    for i in range(loop_num):
+        print(f'loop {i+1}/{loop_num}')
+        shape_params, expression_params, pose_params = set_params(batchsize)
+        flamelayer.cuda()
 
-        # trimeshオブジェクトの作成
-        mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
-        outmesh_path = join( output_obj_dir, f'output_mesh_{i}.obj')
-        # OBJファイルとして保存
-        mesh.export(outmesh_path)
-        output_lmk_path = join(output_lmk_dir,f"lmk_{i}.npy")
-        np.save(output_lmk_path, landmark[i].detach().cpu().numpy())
-        #print('output mesh saved to: ', outmesh_path)
+        # FLAMEのforward呼び出し
+        vertice, landmark = flamelayer(
+            shape_params, expression_params, pose_params
+        )
+
+        if config.optimize_eyeballpose and config.optimize_neckpose:
+            #print("Optimizing for eyeball and neck pose")
+            neck_pose = torch.zeros(batchsize, 3).cuda()
+            eye_pose = torch.zeros(batchsize, 6).cuda()
+            vertice, landmark = flamelayer(
+                shape_params, expression_params, pose_params, neck_pose, eye_pose
+            )
+        #輪郭のランドマークを削除
+        landmark = landmark[:,17:,:]
+        
+        #OBJファイルとして保存
+        for j in tqdm(range(batchsize)):
+            vertices = vertice[j].detach().cpu().numpy().squeeze()  # verticeはFLAMEモデルからの出力
+            faces = flamelayer.faces  # FLAMEモデルの面情報
+
+            # trimeshオブジェクトの作成
+            mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
+            outmesh_path = join( output_obj_dir, f'output_mesh_{j+base_num}.obj')
+            #print(outmesh_path)
+            # OBJファイルとして保存
+            mesh.export(outmesh_path)
+            output_lmk_path = join(output_lmk_dir,f"lmk_{j+base_num}.npy")
+            np.save(output_lmk_path, landmark[j].detach().cpu().numpy())
+            #print('output mesh saved to: ', outmesh_path)
+        base_num += batchsize
+        
 
 if __name__ == '__main__':
     main()
