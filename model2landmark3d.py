@@ -20,26 +20,26 @@ from tqdm import tqdm
 def create_jaw_array(jaw_opening_factor, jaw_shift_factor, jaw_vertical_factor):
     return np.array([0, 0, 0, np.abs(np.random.randn() * jaw_opening_factor), np.random.randn() * jaw_shift_factor, np.random.randn() * jaw_vertical_factor], dtype=np.float32)
 
-#顔形状，表情，姿勢パラメータを指定
-def set_params(batchsize, jaw_opening_factor=0.5, jaw_shift_factor=0.1, jaw_vertical_factor=0.1):
+def set_params(batchsize, jaw_opening_factor=0.1, jaw_shift_factor=0.01, jaw_vertical_factor=0.01):
     shape_params = torch.zeros(batchsize, 100).cuda()
-    
-    # pose_params_numpy[:, :3] : global rotation
-    # pose_params_numpy[:, 3:] : jaw rotation
-    #[0,0,0,口の開き具合(正が開く),左右方向への曲げ(正が左，負が右), 上下方向への曲げ(正が左，負が右)]
+    pose_params_numpy = np.zeros((batchsize, 6), dtype=np.float32)
+    for i in range(batchsize):
+        if i >= batchsize * 0.75:  # バッチの後半1/4でスケーリングファクターを変更
+            new_opening_factor = 0.5  # 新しいスケーリングファクター
+            new_shift_factor = 0.05
+            new_vertical_factor = 0.05
+            pose_params_numpy[i] = create_jaw_array(new_opening_factor, new_shift_factor, new_vertical_factor)
+        elif i >= batchsize * 0.5:  # バッチの後半1/2でスケーリングファクターを変更
+            new_opening_factor = 0.2  # 新しいスケーリングファクター
+            new_shift_factor = 0.05
+            new_vertical_factor = 0.05
+            pose_params_numpy[i] = create_jaw_array(new_opening_factor, new_shift_factor, new_vertical_factor)
+        else:
+            pose_params_numpy[i] = create_jaw_array(jaw_opening_factor, jaw_shift_factor, jaw_vertical_factor)
 
-    #姿勢，顎のパラメータを指定
-    pose_params_numpy = np.array([create_jaw_array(jaw_opening_factor, jaw_shift_factor, jaw_vertical_factor) for _ in range(batchsize)], dtype=np.float32)
     pose_params = torch.tensor(pose_params_numpy, dtype=torch.float32).cuda()
-
-    #pose_params = torch.zeros(batchsize, 6, dtype=torch.float32).cuda()
-
-    #表情パラメータを乱数で指定
     expression_params_numpy = np.array([np.random.randn(50) for _ in range(batchsize)], dtype=np.float32)
     expression_params = torch.tensor(expression_params_numpy, dtype=torch.float32).cuda()
-
-    #expression_params = torch.zeros(8, 50, dtype=torch.float32).cuda()
-
     return shape_params, expression_params, pose_params
 
 def main():
