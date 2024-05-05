@@ -14,34 +14,32 @@ import wandb
 class CustomDataset(Dataset):
     def __init__(self, input_dir, target_dir, data_size):
         self.datasize = data_size
-        self.inputs = self.load_data(input_dir, f"inputs_cache_{data_size}_normalized.npy")
-        self.targets = self.load_data(target_dir, f"targets_cache_{data_size}_normalized.npy")
+        self.inputs = self.load_data(input_dir, f"inputs_cache_{data_size}.npy", '2d')
+        self.targets = self.load_data(target_dir, f"targets_cache_{data_size}.npy", '3d')
 
-    def load_data(self, directory, cache_file_name):
-        cache_path = os.path.join(directory, cache_file_name)
-        print(f"cache_path: {cache_path}")
+    def load_data(self, directory, cache_file_name, data_type):
+        #cache_path = os.path.join(directory, cache_file_name)
+        cache_path = cache_file_name
         if os.path.exists(cache_path):
-            print(f"Loading cached data from {cache_path}")
             data_list = np.load(cache_path)
         else:
             print(f"Cache not found. Loading data from {directory}")
-            files = sorted(os.listdir(directory))# ファイル名をソート
+            files = sorted([file for file in os.listdir(directory) if file.endswith('.npy')])
             data_list = []
             count = 0
             for file in tqdm(files):
                 if count == self.datasize:
                     break
-                if file.endswith('.npy'):
-                    data_path = os.path.join(directory, file)
-                    data = np.load(data_path)
-                    if data.shape[0] > 51:# 特徴点の数を51に統一
-                        data = data[:51]
-                    elif data.shape[0] < 51:
-                        break
-                    data_list.append(data)
-                    count += 1
+                data_path = os.path.join(directory, file)
+                data = np.load(data_path)
+                if data.shape[0] > 51:
+                    data = data[:51]
+                elif data.shape[0] < 51:
+                    continue
+                data_list.append(data)
+                count += 1
             data_list = np.stack(data_list)
-            np.save(cache_path, data_list)  # キャッシュとして保存
+            np.save(cache_path, data_list)
         return data_list
 
     def __len__(self):
@@ -52,7 +50,7 @@ class CustomDataset(Dataset):
         y = torch.tensor(self.targets[idx], dtype=torch.float32)
         return x, y
 
-def weighted_mse_loss(input, target, weight=10.0):
+def weighted_mse_loss(input, target, weight=1):
     # input, targetの形状: [BatchSize, SequenceSize, 3]
     # 3次元目の誤差に重みをかける
     loss = (input - target) ** 2
@@ -65,13 +63,13 @@ def main():
     hidden_dim = 256
     output_dim = 3
     num_layers = 2
-    model_path = '2d_2_3d_model.pth'
+    model_path = f'2d_2_3d_{dataset_size}.pth'
     epoch_num = 1000
     learning_rate = 1e-5
     batch_size = 64
-    dataset_size = 100000
+    dataset_size = 200000
     wandb.init(
-        project="2D_3d_landmark",
+        project="2d_3d_landmark",
         config={
             "input_dim": input_dim,
             "hidden_dim": hidden_dim,
@@ -89,8 +87,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # データセットとデータローダーの準備
-    input_dir = '../output_landmark'
-    target_dir = '../output_landmark'
+    input_dir = 'output_landmark/2d'
+    target_dir = 'output_landmark/3d'
     dataset = CustomDataset(input_dir, target_dir, dataset_size)
     print("dataset size:",len(dataset))
     train_size = int(len(dataset) * 0.8)# 80%を訓練データに

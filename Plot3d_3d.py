@@ -9,7 +9,9 @@ def plot_landmarks3d_double(landmarks_3d_1, landmarks_3d_2):
     
     # First set of 3D landmarks
     ax1 = fig.add_subplot(121, projection='3d')
-    ax1.scatter(landmarks_3d_1[:, 0], landmarks_3d_1[:, 1], landmarks_3d_1[:, 2])
+    ax1.scatter(landmarks_3d_1[:, 0], landmarks_3d_1[:, 1], landmarks_3d_1[:, 2], color='blue')
+    for i, point in enumerate(landmarks_3d_1):
+        ax1.text(point[0], point[1], point[2], str(i), color='red', fontsize=9)
     ax1.set_xlabel('X')
     ax1.set_ylabel('Y')
     ax1.set_zlabel('Z')
@@ -17,7 +19,9 @@ def plot_landmarks3d_double(landmarks_3d_1, landmarks_3d_2):
     
     # Second set of 3D landmarks
     ax2 = fig.add_subplot(122, projection='3d')
-    ax2.scatter(landmarks_3d_2[:, 0], landmarks_3d_2[:, 1], landmarks_3d_2[:, 2])
+    ax2.scatter(landmarks_3d_2[:, 0], landmarks_3d_2[:, 1], landmarks_3d_2[:, 2], color='blue')
+    for i, point in enumerate(landmarks_3d_2):
+        ax2.text(point[0], point[1], point[2], str(i), color='red', fontsize=9)
     ax2.set_xlabel('X')
     ax2.set_ylabel('Y')
     ax2.set_zlabel('Z')
@@ -32,3 +36,4 @@ def plot_landmarks3d_double(landmarks_3d_1, landmarks_3d_2):
     fig.canvas.mpl_connect('key_press_event', on_key)
 
     plt.show()
+

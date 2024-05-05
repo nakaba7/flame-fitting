@@ -4,6 +4,7 @@ import trimesh
 from os.path import join
 from flame_pytorch import FLAME, get_config
 from tqdm import tqdm
+import os
 
 """
 FLAMEモデルのパラメータを指定して、3Dランドマークを取得するコード
@@ -49,8 +50,16 @@ def main():
     batchsize = config.b
     base_num = 0
     loop_num = config.n
-    output_obj_dir = './output'
-    output_lmk_dir = './output_landmark/3d'
+    #output_obj_dir = './output'
+    #output_lmk_dir = './output_landmark/3d'
+    output_obj_dir = './output/test'
+    output_lmk_dir = './output_landmark/3d/test'
+    if not os.path.exists(output_obj_dir):
+        os.makedirs(output_obj_dir)
+        print(f"{output_obj_dir} created")
+    if not os.path.exists(output_lmk_dir):
+        os.makedirs(output_lmk_dir)
+        print(f"{output_lmk_dir} created")
 
     for i in range(loop_num):
         print(f'loop {i+1}/{loop_num}')
