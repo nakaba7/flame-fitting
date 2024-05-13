@@ -68,14 +68,19 @@ def main(args):
     pattern_points *= square_size
 
     # 各カメラからの画像セットへのパス
-    images1 = glob.glob(f'StereoImage_{camera0}/*.jpg')
-    images2 = glob.glob(f'StereoImage_{camera1}/*.jpg')
+    images1 = sorted(glob.glob(f'StereoImage_{camera0}/*.jpg'))
+    images2 = sorted(glob.glob(f'StereoImage_{camera1}/*.jpg'))
+    print(f"Found {len(images1)} images for {camera0} and {len(images2)} images for {camera1}.")
+
+    # 画像の順番を逆にする
+    images1.reverse()
+    images2.reverse()
 
     # 両方のカメラからの画像で共通して見つかったチェスボードのコーナーを格納するリスト
     objpoints = []  # 3Dポイント
     imgpoints1 = []  # カメラ1の2Dポイント
     imgpoints2 = []  # カメラ2の2Dポイント
-    idx=0
+    idx = 0
     for idx, (img_file1, img_file2) in enumerate(tqdm(zip(images1, images2), total=len(images1), desc="Processing images")):
         img1 = cv2.imread(img_file1)
         img2 = cv2.imread(img_file2)
@@ -89,14 +94,17 @@ def main(args):
         
         # 両方の画像でコーナーが見つかった場合、そのポイントをリストに追加
         if ret1 and ret2:
+            print(f"Chessboard corners found in both images {idx}.")
             objpoints.append(pattern_points)
             imgpoints1.append(corners1)
             imgpoints2.append(corners2)
             draw_matches(img1, img2, corners1[:,0,:], corners2[:,0,:], os.path.join(output_folder, f"matches_{idx+1}.jpg"))
         idx += 1
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-8)
+
     # ステレオキャリブレーションを実行
     retval, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate(
-        objpoints, imgpoints1, imgpoints2, mtx_a, dist_a, mtx_b, dist_b, gray1.shape[::-1])
+        objpoints, imgpoints1, imgpoints2, mtx_a, dist_a, mtx_b, dist_b, gray1.shape[::-1], criteria=criteria)
 
     # ステレオキャリブレーションの結果を保存または使用
     print("Rotation Matrix:\n", R)
@@ -108,8 +116,9 @@ def main(args):
     np.save(f'Parameters/T_{camera0}_{camera1}.npy', T)
     np.save('Parameters/T.npy', T)
     print("T saved!")
-
-    R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(mtx_a, dist_a, mtx_b, dist_b, gray1.shape[::-1], R, T)#射影行列の計算
+    # criteria for stereo calibration
+    #criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.0001)
+    R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(mtx_a, dist_a, mtx_b, dist_b, gray1.shape[::-1], R, T) # 射影行列の計算
 
     print("P1:\n", P1)
     print("P2:\n", P2)
@@ -126,9 +135,8 @@ def main(args):
     # カメラ間の距離を計算
     distance = np.linalg.norm(T)
     print(f"Distance between cameras: {distance*square_size} cm")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f',nargs=2 , type=str,  help='Enter the folder names of the images from the two cameras.')
+    parser.add_argument('-f', nargs=2, type=str, help='Enter the folder names of the images from the two cameras.')
     main(parser.parse_args())
-
-
