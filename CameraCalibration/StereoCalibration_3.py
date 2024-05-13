@@ -26,6 +26,7 @@ def draw_matches_three_cam(img1, img2, img3, points1, points2, points3, output_f
 
     # 画像を保存
     cv2.imwrite(output_file, img_matches)
+    
 output_folder = "ChessBoard_Correspondences"
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)

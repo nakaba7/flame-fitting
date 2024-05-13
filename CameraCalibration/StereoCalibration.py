@@ -3,6 +3,7 @@ import numpy as np
 import glob
 import os
 import argparse
+from tqdm import tqdm
 
 """
 2つのカメラで撮影したチェスボードの画像からステレオキャリブレーションを行うスクリプト．
@@ -41,7 +42,9 @@ def main(args):
     # 以下の points1 と points2 は、対応するコーナー点のリスト
     # img1, img2 は対応する画像
     # この部分は対応する点のデータと実際の画像データに基づいて適宜調整してください
-    output_folder = "ChessBoard_Correspondences"
+    camera0 = args.f[0]
+    camera1 = args.f[1]
+    output_folder = f"ChessBoard_Correspondences/{camera0}_{camera1}"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     else:
@@ -49,8 +52,7 @@ def main(args):
         for jpg_file in glob.glob(os.path.join(output_folder, "*.jpg")):
             os.remove(jpg_file)
         print("Deleted all .jpg files in the folder.")
-    camera0 = args.f[0]
-    camera1 = args.f[1]
+    
     # キャリブレーションデータの読み込み
     # ここでは、mtx_a, dist_a, mtx_b, dist_b, R, T などがキャリブレーションから得られたパラメータとします。
     mtx_a = np.load(f"Parameters/ChessBoard_{camera0}_mtx.npy")
@@ -66,15 +68,15 @@ def main(args):
     pattern_points *= square_size
 
     # 各カメラからの画像セットへのパス
-    images1 = glob.glob(f'ChessBoard_{camera0}/*.jpg')
-    images2 = glob.glob(f'ChessBoard_{camera1}/*.jpg')
+    images1 = glob.glob(f'StereoImage_{camera0}/*.jpg')
+    images2 = glob.glob(f'StereoImage_{camera1}/*.jpg')
 
     # 両方のカメラからの画像で共通して見つかったチェスボードのコーナーを格納するリスト
     objpoints = []  # 3Dポイント
     imgpoints1 = []  # カメラ1の2Dポイント
     imgpoints2 = []  # カメラ2の2Dポイント
     idx=0
-    for img_file1, img_file2 in zip(images1, images2):
+    for idx, (img_file1, img_file2) in enumerate(tqdm(zip(images1, images2), total=len(images1), desc="Processing images")):
         img1 = cv2.imread(img_file1)
         img2 = cv2.imread(img_file2)
         gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
@@ -117,6 +119,13 @@ def main(args):
     np.save(f'Parameters/P2_{camera0}_{camera1}.npy', P2)
     print("P2 saved!")
 
+    print("Retval: ", retval)
+    with open(f"Parameters/retval_{camera0}_{camera1}.txt", "w") as f:
+        f.write(str(retval))
+
+    # カメラ間の距離を計算
+    distance = np.linalg.norm(T)
+    print(f"Distance between cameras: {distance*square_size} cm")
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-f',nargs=2 , type=str,  help='Enter the folder names of the images from the two cameras.')

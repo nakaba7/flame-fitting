@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import cv2
 import os
 import numpy as np
@@ -8,7 +5,7 @@ import glob
 import argparse
 
 """
-カメラキャリブレーションを行うスクリプト．1つのカメラずつで行う．カメラ行列と歪みパラメータを保存する．
+カメラキャリブレーションを行うスクリプト. 1つのカメラずつで行う. カメラ行列と歪みパラメータを保存する.
 
 Usage:
     python CameraCalibration.py -f eye_left
@@ -24,14 +21,15 @@ def main(args):
     if args.f != 'eye_left' and args.f != 'eye_right' and args.f != 'mouth_left' and args.f != 'mouth_right':
         print("Invalid args. Choose eye_left, eye_right, mouth_left or mouth_right.")
         exit() 
-    square_size = 2.5      # 正方形の1辺のサイズ[cm]
+    square_size = 0.4      # 正方形の1辺のサイズ[cm]
     pattern_size = (6, 8)  # 交差ポイントの数
-    folder_name = f"ChessBoard_{args.f}"
+    chessname = f"ChessBoard_{args.f}"
+    folder_name = os.path.join("CameraCalibration", chessname)
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
         
     print("Use images in ",folder_name)
-    reference_img = 30 # 参照画像の枚数
+    #reference_img = 50 # 参照画像の枚数
 
     # 新しいフォルダーの名前
     output_folder_name = "Processed_Images"
@@ -51,6 +49,7 @@ def main(args):
     for filepath in images:
         img = cv2.imread(filepath)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        #print("size of image: ", gray.shape[::-1])
         # Find the chess board corners
         ret, corners = cv2.findChessboardCorners(gray, pattern_size)
         if ret:
@@ -67,17 +66,18 @@ def main(args):
             img_filename = os.path.basename(filepath)
             cv2.imwrite(os.path.join(output_path, img_filename), img)
             
-        if count >= reference_img - 1:
-            break
+        #if count >= reference_img - 1:
+         #   break
         count += 1
 
     print("calculating camera parameter...")
     # 内部パラメータを計算
+    # ret: Root Men Square(RMS), mtx: カメラ行列, dist: 歪みパラメータ, rvecs: 回転ベクトル, tvecs: 並進ベクトル
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
     # 計算結果を保存
-    np.save(os.path.join(f"Parameters/{folder_name}_mtx"), mtx)  # カメラ行列
-    np.save(os.path.join(f"Parameters/{folder_name}_dist"), dist.ravel())  # 歪みパラメータ
+    np.save(os.path.join(f"CameraCalibration/Parameters/{chessname}_mtx"), mtx)  # カメラ行列
+    np.save(os.path.join(f"CameraCalibration/Parameters/{chessname}_dist"), dist.ravel())  # 歪みパラメータ
     # 計算結果を表示
     print("RMS = ", ret)
     print("mtx = \n", mtx)
