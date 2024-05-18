@@ -8,14 +8,24 @@ from EarlyStopping import EarlyStopping
 from SimpleNet import DepthPredictionModel
 from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR
+from CNNModel import CNNPredictor
 import wandb
+"""
+作成したネットワークで学習を行うスクリプト. flame-fittingディレクトリの下で実行する.
+ネットワークの候補はSimpleNet.py, CNNModel.pyの中から選択する.
+Usage:
+    $ python Train_Val.py
 
+"""
 
 class CustomDataset(Dataset):
     def __init__(self, input_dir, target_dir, data_size):
         self.datasize = data_size
         self.inputs = self.load_data(input_dir, f"inputs_cache_{data_size}.npy", '2d')
         self.targets = self.load_data(target_dir, f"targets_cache_{data_size}.npy", '3d')
+        self.targets = self.targets[:, :, 2]  # 3次元目のみを取得
+        self.targets = np.expand_dims(self.targets, axis=2)
+        #print("targets shape:", self.targets.shape)
 
     def load_data(self, directory, cache_file_name, data_type):
         #cache_path = os.path.join(directory, cache_file_name)
@@ -61,9 +71,13 @@ def main():
     # パラメータ設定
     input_dim = 2
     hidden_dim = 1024
-    output_dim = 3
+    output_dim = 1
     dataset_size = 200000
-    model_path = f'Simple_2d_2_3d_{dataset_size}.pth'
+    #model_path = f'Simple_2d_2_3d_{dataset_size}.pth'
+    if output_dim == 1:
+        model_path = f'DepthOnly_{dataset_size}.pth'
+    elif output_dim == 3:
+        model_path = f'2d_2_3d_{dataset_size}.pth'
     epoch_num = 1000
     learning_rate = 1e-5
     batch_size = 64
@@ -94,7 +108,8 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-    model = DepthPredictionModel(input_dim, hidden_dim, output_dim).to(device)
+    #model = DepthPredictionModel(input_dim, hidden_dim, output_dim).to(device)
+    model = CNNPredictor().to(device)
     earlystopping = EarlyStopping(patience=20, verbose=True, path=model_path)
 
     criterion = nn.MSELoss()  
@@ -104,6 +119,7 @@ def main():
     for epoch in tqdm(range(epoch_num)):
         model.train()
         for inputs, targets in train_dataloader:
+            #print("train",inputs.shape, targets.shape)
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -118,6 +134,7 @@ def main():
         with torch.no_grad():
             val_loss = 0
             for inputs, targets in val_dataloader:
+                #print("val",inputs.shape, targets.shape)
                 inputs, targets = inputs.to(device), targets.to(device)
                 outputs = model(inputs)
                 val_loss += criterion(outputs, targets).item()
@@ -128,6 +145,7 @@ def main():
                 break
 
         print(f'Epoch {epoch+1}, Validation Loss: {val_loss}, lr: {scheduler.get_last_lr()}')
+        print("====================================")
         wandb.log({"Validation Loss": val_loss})
         scheduler.step()
 

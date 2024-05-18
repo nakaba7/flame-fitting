@@ -16,7 +16,6 @@ if not os.path.exists(output_dir):
 # 入力ディレクトリ内のすべてのファイル名を取得
 files = [f for f in os.listdir(input_dir) if f.endswith('.npy')]
 
-# tqdmを使って進行状況バーを表示
 for file_name in tqdm(files, desc="Processing files"):
     # ファイルをロード
     file_path = os.path.join(input_dir, file_name)

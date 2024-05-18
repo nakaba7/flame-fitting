@@ -3,9 +3,11 @@ import os
 import numpy as np
 import glob
 import argparse
+from tqdm import tqdm
 
 """
 カメラキャリブレーションを行うスクリプト. 1つのカメラずつで行う. カメラ行列と歪みパラメータを保存する.
+カレントディレクトリがCameraCalibrationの状態で実行すること.
 
 Usage:
     python CameraCalibration.py -f eye_left
@@ -21,10 +23,10 @@ def main(args):
     if args.f != 'eye_left' and args.f != 'eye_right' and args.f != 'mouth_left' and args.f != 'mouth_right':
         print("Invalid args. Choose eye_left, eye_right, mouth_left or mouth_right.")
         exit() 
-    square_size = 0.4      # 正方形の1辺のサイズ[cm]
+    square_size = 2.5      # 正方形の1辺のサイズ[cm]
     pattern_size = (6, 8)  # 交差ポイントの数
     chessname = f"ChessBoard_{args.f}"
-    folder_name = os.path.join("CameraCalibration", chessname)
+    folder_name = chessname
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
         
@@ -46,7 +48,7 @@ def main(args):
 
     images = glob.glob(f'{folder_name}/*.jpg')
     count = 0
-    for filepath in images:
+    for filepath in tqdm(images):
         img = cv2.imread(filepath)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         #print("size of image: ", gray.shape[::-1])
@@ -76,10 +78,14 @@ def main(args):
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
     # 計算結果を保存
-    np.save(os.path.join(f"CameraCalibration/Parameters/{chessname}_mtx"), mtx)  # カメラ行列
-    np.save(os.path.join(f"CameraCalibration/Parameters/{chessname}_dist"), dist.ravel())  # 歪みパラメータ
+    np.save(os.path.join(f"Parameters/{chessname}_mtx"), mtx)  # カメラ行列
+    np.save(os.path.join(f"Parameters/{chessname}_dist"), dist.ravel())  # 歪みパラメータ
+    np.save(os.path.join(f"Parameters/{chessname}_rvecs"), rvecs)  # 回転ベクトル
+    np.save(os.path.join(f"Parameters/{chessname}_tvecs"), tvecs)  # 並進ベクトル
     # 計算結果を表示
     print("RMS = ", ret)
+    with open(f"{folder_name}/RMS.txt", "w") as f:
+        f.write(str(ret))
     print("mtx = \n", mtx)
     print("dist = ", dist.ravel())
     

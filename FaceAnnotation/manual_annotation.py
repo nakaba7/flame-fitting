@@ -20,25 +20,38 @@ def manual_annotation(input_path, output_img_path, output_npy_path):
     # Function to display the image and capture points
     def click_event(event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
-            cv2.circle(img, (x, y), 3, (255, 0, 0), -1)
+            cv2.circle(img, (x, y), 3, (0, 0, 255), -1)
             facial_landmarks.append((x, y))
             cv2.imshow('image', img)
 
     # Load the image
     img = cv2.imread(input_path)
+    img_original = img.copy()  # Copy of the original image to reset if needed
 
     # Create a named window
     cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
     # Set the window to fullscreen
     cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-    cv2.imshow('image', img)
+    while True:
+        # Display the image
+        cv2.imshow('image', img)
 
-    # Set mouse callback function
-    cv2.setMouseCallback('image', click_event)
+        # Set mouse callback function
+        cv2.setMouseCallback('image', click_event)
 
-    # Display the image until a key is pressed
-    cv2.waitKey(0)
+        # Wait for a key press
+        key = cv2.waitKey(0) & 0xFF
+
+        # If 'r' is pressed, reset the image and landmarks
+        if key == ord('r'):
+            img = img_original.copy()
+            facial_landmarks = []
+            print("Resetting landmarks...")
+
+        # If any other key is pressed, break the loop
+        else:
+            break
 
     # Close all windows
     cv2.destroyAllWindows()

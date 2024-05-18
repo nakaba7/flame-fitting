@@ -2,6 +2,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plot_2d(landmarks_2d):
+    """
+    2次元ランドマークをプロットする関数.
+    画像座標系に従い、左上を原点とする.
+    """
+    # プロット
+    plt.figure(figsize=(10, 10))
+    plt.scatter(landmarks_2d[:, 0], landmarks_2d[:, 1], s=5)
+
+    # インデックスを表示し、座標をprint
+    for idx, (x, y) in enumerate(landmarks_2d):
+        plt.text(x, y, str(idx), fontsize=8, ha='right')
+        print(f"Index: {idx}, Coordinates: ({x}, {y})")
+
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.title('2D Feature Points with Index (Image Coordinates)')
+    #plt.xlim(0, 1232)
+    #plt.ylim(0, 1640)
+    plt.gca().invert_yaxis()  # y軸を反転
+    plt.grid(True)
+    plt.show()
+
+
 def plot_3d(landmarks_3d):
     """
     3次元ランドマークをプロットする関数.
@@ -189,3 +216,4 @@ def plot_3d_3d_compare(landmarks_3d_1, landmarks_3d_2):
     fig.canvas.mpl_connect('key_press_event', on_key)
 
     plt.show()
+

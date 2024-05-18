@@ -19,6 +19,6 @@ class DepthPredictionModel(nn.Module):
         x = F.relu(self.bn2(self.fc2(x)))
         x = self.drop(x)
         x = self.fc3(x)
-        x = x.view(x.size(0), 51, 3)  # 出力を適切な形状にリシェイプ
+        x = x.view(x.size(0), 51, 1)  # 出力を適切な形状にリシェイプ
         return x
 

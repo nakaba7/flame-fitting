@@ -16,6 +16,7 @@ Usage:
     python model2landmark3d.py -b [batchsize] -n [loop_num]
 Args:
     -b: バッチサイズ
+    -n: ループ回数
 """
 
 #poseパラメータの顎に関係する部分を乱数×スケーリングファクターで指定する関数
@@ -88,11 +89,11 @@ def main():
 
             # trimeshオブジェクトの作成
             mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
-            outmesh_path = join( output_obj_dir, f'output_mesh_{j+base_num}.obj')
+            outmesh_path = join( output_obj_dir, f'output_mesh_{j+base_num}_test.obj')
             #print(outmesh_path)
             # OBJファイルとして保存
             mesh.export(outmesh_path)
-            output_lmk_path = join(output_lmk_dir,f"lmk_{j+base_num}.npy")
+            output_lmk_path = join(output_lmk_dir,f"lmk_{j+base_num}_test.npy")
             np.save(output_lmk_path, landmark[j].detach().cpu().numpy())
             #print('output mesh saved to: ', outmesh_path)
         base_num += batchsize
