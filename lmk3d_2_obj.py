@@ -1,25 +1,20 @@
-'''
-Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V. (MPG) is holder of all proprietary rights on this computer program. 
-Using this computer program means that you agree to the terms in the LICENSE file (https://flame.is.tue.mpg.de/modellicense) included 
-with the FLAME model. Any use not explicitly granted by the LICENSE is prohibited.
-
-Copyright 2020 Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V. (MPG). acting on behalf of its 
-Max Planck Institute for Intelligent Systems. All rights reserved.
-
-More information about FLAME is available at http://flame.is.tue.mpg.de.
-For comments or questions, please email us at flame@tue.mpg.de
-'''
-
 import numpy as np
 import chumpy as ch
 from os.path import join, basename
-
 from smpl_webuser.serialization import load_model
 from fitting.landmarks import load_embedding, landmark_error_3d
 from fitting.util import load_binary_pickle, write_simple_obj, safe_mkdir, get_unit_factor
 import argparse
+import scipy.sparse as sp
+import glob
+"""
+指定したディレクトリ下の3次元ランドマークをFLAMEモデルにフィッティングし、objファイルとして保存するスクリプト
 
-# -----------------------------------------------------------------------------
+Usage:
+    python lmk3d_2_obj.py -f [3Dランドマークディレクトリ]
+Args:
+    -f: 3次元ランドマークを含むディレクトリ
+"""
 
 def fit_lmk3d( lmk_3d,                      # input landmark 3d
                model,                       # model
@@ -54,9 +49,9 @@ def fit_lmk3d( lmk_3d,                      # input landmark 3d
     free_variables = [ model.trans, model.pose[pose_idx], model.betas[used_idx] ] 
     
     # weights
-    print("fit_lmk3d(): use the following weights:")
-    for kk in weights.keys():
-        print("fit_lmk3d(): weights['%s'] = %f" % ( kk, weights[kk] ))
+    #print("fit_lmk3d(): use the following weights:")
+    #for kk in weights.keys():
+    #    print("fit_lmk3d(): weights['%s'] = %f" % ( kk, weights[kk] ))
 
     # objectives
     # lmk
@@ -92,26 +87,26 @@ def fit_lmk3d( lmk_3d,                      # input landmark 3d
     # optimize
     # step 1: rigid alignment
     from time import time
-    timer_start = time()
-    print("\nstep 1: start rigid fitting...")
+    #timer_start = time()
+    #print("\nstep 1: start rigid fitting...")
     ch.minimize( fun      = lmk_err,
                  x0       = [ model.trans, model.pose[0:3] ],
                  method   = 'dogleg',
                  callback = on_step,
                  options  = opt_options )
-    timer_end = time()
-    print("step 1: fitting done, in %f sec\n" % ( timer_end - timer_start ))
+    #timer_end = time()
+    #print("step 1: fitting done, in %f sec\n" % ( timer_end - timer_start ))
 
     # step 2: non-rigid alignment
-    timer_start = time()
-    print("step 2: start non-rigid fitting...")    
+    #timer_start = time()
+    #print("step 2: start non-rigid fitting...")    
     ch.minimize( fun      = objectives,
                  x0       = free_variables,
                  method   = 'dogleg',
                  callback = on_step,
                  options  = opt_options )
-    timer_end = time()
-    print("step 2: fitting done, in %f sec\n" % ( timer_end - timer_start ))
+    #timer_end = time()
+    #print("step 2: fitting done, in %f sec\n" % ( timer_end - timer_start ))
 
     # return results
     parms = { 'trans': model.trans.r, 'pose': model.pose.r, 'betas': model.betas.r }
@@ -119,30 +114,35 @@ def fit_lmk3d( lmk_3d,                      # input landmark 3d
 
 # -----------------------------------------------------------------------------
 
-def run_fitting(args):
-    # input landmarks
-    lmk_path = args.i
-    # measurement unit of landmarks ['m', 'cm', 'mm']
-    unit = 'm' 
+def run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_dir):
+    print("load:", lmk_path)
+    lmk_3d = np.load(lmk_path)
+    # run fitting
+    mesh_v, mesh_f, parms = fit_lmk3d( lmk_3d=lmk_3d,                                         # input landmark 3d
+                                       model=model,                                           # model
+                                       lmk_face_idx=lmk_face_idx, lmk_b_coords=lmk_b_coords,  # landmark embedding
+                                       weights=weights,                                       # weights for the objectives
+                                       shape_num=shape_num, expr_num=expr_num, opt_options=opt_options ) # options
+    # write result
+    filename = basename(lmk_path)[:-4]
+    # write result
+    output_path = join(output_dir, f'{filename}.obj' )
+    print("write result to:", output_path)
+    print("------------------------------------------")
+    write_simple_obj( mesh_v=mesh_v, mesh_f=mesh_f, filepath=output_path, verbose=False )
 
-    scale_factor = get_unit_factor('m') / get_unit_factor(unit)
-    lmk_3d = scale_factor*np.load(lmk_path)
-    print("loaded 3d landmark from:", lmk_path)
+def main(args):
+    lmk_dir = args.f
+    output_dir = args.o
+    safe_mkdir(output_dir)
 
     # model
     model_path = './models/generic_model.pkl' # change to 'female_model.pkl' or 'male_model.pkl', if gender is known
     model = load_model(model_path)       # the loaded model object is a 'chumpy' object, check https://github.com/mattloper/chumpy for details
-    print("loaded model from:", model_path)
 
     # landmark embedding
     lmk_emb_path = './models/flame_static_embedding.pkl' 
-    lmk_face_idx, lmk_b_coords = load_embedding(lmk_emb_path)
-    print("loaded lmk embedding")
-
-    # output
-    #output_dir = './output_fitting_lmk3d/'
-    output_dir = "../Collect FLAME Landmark/Assets/Objects/FLAMEmodel"
-    safe_mkdir(output_dir)
+    lmk_face_idx, lmk_b_coords = load_embedding(lmk_emb_path)   
 
     # weights
     weights = {}
@@ -160,32 +160,22 @@ def run_fitting(args):
     expr_num = 50
 
     # optimization options
-    import scipy.sparse as sp
     opt_options = {}
-    opt_options['disp']    = 1
+    opt_options['disp']    = 0 #1にするとパラメータが表示される
     opt_options['delta_0'] = 0.1
     opt_options['e_3']     = 1e-4
     opt_options['maxiter'] = 2000
     sparse_solver = lambda A, x: sp.linalg.cg(A, x, maxiter=opt_options['maxiter'])[0]
     opt_options['sparse_solver'] = sparse_solver
-
-    # run fitting
-    mesh_v, mesh_f, parms = fit_lmk3d( lmk_3d=lmk_3d,                                         # input landmark 3d
-                                       model=model,                                           # model
-                                       lmk_face_idx=lmk_face_idx, lmk_b_coords=lmk_b_coords,  # landmark embedding
-                                       weights=weights,                                       # weights for the objectives
-                                       shape_num=shape_num, expr_num=expr_num, opt_options=opt_options ) # options
-
-    # write result
-    filename = basename(lmk_path)[:-4]
-    # write result
-    output_path = join( output_dir, f'{filename}.obj' )
-    print("write result to:", output_path)
-    write_simple_obj( mesh_v=mesh_v, mesh_f=mesh_f, filepath=output_path, verbose=False )
-
+    all_lmk = glob.glob(f'{lmk_dir}/*.npy')
+    lmk_num = len(all_lmk)
+    for i, lmk_path in enumerate(all_lmk):
+        print(f"{i+1}/{lmk_num}")
+        run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_dir)
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', default='data/scan_lmks.npy', type=str,  help='input numpy file for 3D landmarks')
-    run_fitting(parser.parse_args())
+    parser.add_argument('-f', default='output_landmark/estimated_3d/test', type=str,  help='directory of the 3D landmarks.')
+    parser.add_argument('-o', default='../Collect FLAME Landmark/Assets/Objects/FLAMEmodel', type=str,  help='output directory')
+    main(parser.parse_args())

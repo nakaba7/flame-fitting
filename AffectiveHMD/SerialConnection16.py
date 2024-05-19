@@ -1,6 +1,9 @@
 import serial
 import time
 
+"""
+CV1 AffectiveHMDからシリアル通信でセンサデータを受信するクラス. Quest2には使えない.
+"""
 
 class SerialConnection:
 	def __init__(self, portNum, rate):
