@@ -15,9 +15,10 @@ from AffectiveHMD.Quest2_affectiveHMD import setup, write_csv
 """
 ラズパイ2つから画像データ, Arduinoからフォトリフレクタの値を取得するスクリプト.
 usage:
-    python ImagesAndSensorCollect.py -n IMAGENUM
+    python main.py -n IMAGENUM -p PARTICIPANTNAME
 args:
     -n: 画像をキャプチャする回数を指定
+    -p: 参加者名を指定
 """
 
 # Raspberry Piのホスト名またはIPアドレスとポート番号
@@ -75,6 +76,6 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n', default=50 , type=int,  help='Enter the image num to capture.')
+    parser.add_argument('-n', default=100 , type=int,  help='Enter the image num to capture.')
     parser.add_argument('-p', default='hoge', type=str,  help='Enter the participant name.')
     main(parser.parse_args())

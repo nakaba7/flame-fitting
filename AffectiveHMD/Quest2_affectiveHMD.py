@@ -2,6 +2,10 @@ import serial
 import csv
 import os
 import keyboard
+"""
+データ収集に使う関数の定義
+"""
+
 
 def setup(output_dir, port='COM11', baudrate=115200):
     """
