@@ -1,6 +1,14 @@
-from lmk_plot import plot_3d
-import numpy as np
-a=np.load("output_landmark/estimated_3d/quest_3d.npy")
-print(a)
-print(a.shape)
-plot_3d(a)
+import socket
+import datetime
+import time
+import argparse
+import sys
+import os
+import csv
+
+csv_file_path = "sensor_values/participant1.csv"
+timestamp = datetime.datetime.now().strftime("%m%d%H%M")
+# ファイル名にタイムスタンプを追加
+csv_file_path = csv_file_path.replace(".csv", f"_{timestamp}.csv")
+
+print(f"Opened csv file: {csv_file_path}")

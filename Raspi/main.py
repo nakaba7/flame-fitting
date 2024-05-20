@@ -38,6 +38,10 @@ def main(args):
     participant_name = args.p
     output_dir = f'../sensor_values/{participant_name}'
     ser, csv_file_path = setup(output_dir=output_dir, port='COM11', baudrate=115200)
+    # 現在の日時をMMDDHHMM形式で取得
+    timestamp = datetime.datetime.now().strftime("%m%d%H%M")
+    # ファイル名にタイムスタンプを追加
+    csv_file_path = csv_file_path.replace(".csv", f"_{timestamp}.csv")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sa:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sb:
             with open(csv_file_path, 'a', newline='') as csvfile:

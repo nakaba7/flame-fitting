@@ -2,91 +2,130 @@ import cv2
 import numpy as np
 import os
 import argparse
-
+import re
 """
-顔画像に対して、手動で顔の特徴点をアノテーションするサンプルコード。
-コマンドライン引数でフォルダ名とアノテーションする画像の枚数を指定する。
-
-usage:
-$ python manual_annotation.py -f [folder_name] -n [number_of_images]
--f: フォルダ名
--n: アノテーションする画像の枚数
+手動で顔の特徴点検出を行うスクリプト. 左目, 右目, 口の順番で行う.
+Usage:
+    python manual_annotation.py -p PARTICIPANTNAME
+Args:   
+    -p: 参加者名を指定
 """
 
-def manual_annotation(input_path, output_img_path, output_npy_path):
-    # Initialize list to store coordinates of facial landmarks
+def manual_annotation(input_path, output_img_path, output_npy_path, index, total, instructions):
     facial_landmarks = []
 
-    # Function to display the image and capture points
     def click_event(event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
             cv2.circle(img, (x, y), 3, (0, 0, 255), -1)
             facial_landmarks.append((x, y))
             cv2.imshow('image', img)
 
-    # Load the image
     img = cv2.imread(input_path)
-    img_original = img.copy()  # Copy of the original image to reset if needed
+    img_original = img.copy()
 
-    # Create a named window
     cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-    # Set the window to fullscreen
     cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
     while True:
-        # Display the image
-        cv2.imshow('image', img)
-
-        # Set mouse callback function
+        img_display = img.copy()
+        cv2.putText(img_display, f'Index: {index+1}/{total}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+        cv2.putText(img_display, instructions, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2, cv2.LINE_AA)
+        cv2.imshow('image', img_display)
         cv2.setMouseCallback('image', click_event)
-
-        # Wait for a key press
         key = cv2.waitKey(0) & 0xFF
 
-        # If 'r' is pressed, reset the image and landmarks
         if key == ord('r'):
             img = img_original.copy()
             facial_landmarks = []
             print("Resetting landmarks...")
 
-        # If any other key is pressed, break the loop
+        elif key == ord('b'):
+            cv2.destroyAllWindows()
+            return 'back'
+
+        elif key == ord('s'):
+            cv2.destroyAllWindows()
+            return 'stop'
+
+        elif key == ord('q'):
+            cv2.destroyAllWindows()
+            return 'quit'
+
         else:
             break
 
-    # Close all windows
     cv2.destroyAllWindows()
 
-    # Print the selected points
     print("Selected Facial Landmarks:")
     print(facial_landmarks)
 
-    # Save the facial landmarks to a .npy file
     np.save(output_npy_path, np.array(facial_landmarks))
+    cv2.imwrite(output_img_path, img)
+    print(f'Annotated image saved as {output_img_path}')
+    return 'next'
 
-    # Save the image with landmarks
-    annotated_image_path = output_img_path
-    cv2.imwrite(annotated_image_path, img)
-    print(f'Annotated image saved as {annotated_image_path}')
+def natural_sort_key(s):
+    return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
 
-def main(args):
-    folder_name = args.f
-    manual_img_num = args.n
-    input_Imagess_path = os.listdir(f'{folder_name}')
-    output_img_dir = f'FaceData/{folder_name}_Annotated/Images'
-    output_npy_dir = f'FaceData/{folder_name}_Annotated/NPYs'
+def annotation_onefolder(participant_name, facepart, reset=False):
+    input_dir_path = f'FaceImages/{participant_name}/{facepart}'
+    facepart_image_list = os.listdir(input_dir_path)
+    facepart_image_list.sort(key=natural_sort_key)
+    output_img_dir = f'AnnotatedData/{participant_name}_Annotated/Images/{facepart}'
+    output_npy_dir = f'AnnotatedData/{participant_name}_Annotated/NPYs/{facepart}'
     os.makedirs(output_img_dir, exist_ok=True)
     os.makedirs(output_npy_dir, exist_ok=True)
+    last_index_file = os.path.join(output_img_dir, 'last_index.txt')
     img_count = 0
-    for img in input_Imagess_path:
-        if img_count == manual_img_num:
-            print('Manual annotation finished')
-            break
-        input_img = os.path.join(f'{folder_name}', img)
-        manual_annotation(input_img, os.path.join(output_img_dir, f'{img[:-4]}_annotated.jpg'), os.path.join(output_npy_dir, f'{img[:-4]}_annotated.npy'))
-        img_count += 1
+    i = 0
+
+    if not reset and os.path.exists(last_index_file):
+        with open(last_index_file, 'r') as f:
+            i = int(f.read().strip())
+
+    instructions = 'Commands: r - Reset, b - Back, s - Save and Stop, q - Quit'
+    while i < len(facepart_image_list):
+        img = facepart_image_list[i]
+        input_img = os.path.join(input_dir_path, img)
+        print(input_img)
+        result = manual_annotation(input_img, os.path.join(output_img_dir, f'{img[:-4]}_annotated.jpg'), os.path.join(output_npy_dir, f'{img[:-4]}_annotated.npy'), i, len(facepart_image_list), instructions)
+        if result == 'back':
+            i = max(0, i - 1)
+            if img_count > 0:
+                img_count -= 1
+        elif result == 'stop':
+            with open(last_index_file, 'w') as f:
+                f.write(str(i))
+            print(f"Annotation stopped and index saved to {last_index_file}.")
+            return 'stop'
+        elif result == 'quit':
+            reset_indices(participant_name)
+            print("Annotation process forcibly terminated and indices reset.")
+            return 'quit'
+        else:
+            img_count += 1
+            i += 1
+    print(f'{facepart} annotation finished')
+    return 'next'
+
+def reset_indices(participant_name):
+    parts = ["lefteye", "righteye", "mouth"]
+    for part in parts:
+        output_img_dir = f'AnnotatedData/{participant_name}_Annotated/Images/{part}'
+        last_index_file = os.path.join(output_img_dir, 'last_index.txt')
+        with open(last_index_file, 'w') as f:
+            f.write('0')
+
+def main(args):
+    participant_name = args.p
+    if annotation_onefolder(participant_name, "lefteye") == 'quit':
+        return
+    if annotation_onefolder(participant_name, "righteye") == 'quit':
+        return
+    if annotation_onefolder(participant_name, "mouth") == 'quit':
+        return
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', default='hoge', type=str,  help='folder name of the images to be annotated')
-    parser.add_argument('-n', default=10, type=int,  help='number of images to be annotated')
+    parser.add_argument('-p', default='hoge', type=str, help='participant name')
     main(parser.parse_args())
