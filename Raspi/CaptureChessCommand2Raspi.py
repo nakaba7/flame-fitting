@@ -17,7 +17,7 @@ args:
 HOST_A = "192.168.100.34"  #Raspberry Pi 5(両目カメラ)
 HOST_B = "192.168.100.45"  #Raspberry Pi 3(口周辺カメラ)
 PORT = 46361              # Raspberry Pi側のスクリプトで使用しているポート番号
-sleeptime = 0.5
+sleeptime = 1
 
 def wait_for_ack(sock):
     while True:
@@ -70,7 +70,7 @@ def main(args):
                     print(f"{image_num} images captured. Quitting...")
                     break
                 sa.sendall(b'c')
-                wait_for_ack(sa)  # 合図を待つ
+                #wait_for_ack(sa)  # 合図を待つ
                 print(datetime.datetime.now())
                 print(f"Image {i+1} captured.")
                 i+=1

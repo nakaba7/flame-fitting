@@ -20,9 +20,10 @@ Args:
 """
 
 def main(args):
-    if args.f != 'eye_left' and args.f != 'eye_right' and args.f != 'mouth_left' and args.f != 'mouth_right':
+    if args.f not in ['eye_left', 'eye_right', 'mouth_left', 'mouth_right']:
         print("Invalid args. Choose eye_left, eye_right, mouth_left or mouth_right.")
         exit() 
+
     square_size = 2.5      # 正方形の1辺のサイズ[cm]
     pattern_size = (6, 8)  # 交差ポイントの数
     chessname = f"ChessBoard_{args.f}"
@@ -30,9 +31,7 @@ def main(args):
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
         
-    print("Use images in ",folder_name)
-    #reference_img = 50 # 参照画像の枚数
-
+    print("Use images in ", folder_name)
     # 新しいフォルダーの名前
     output_folder_name = "Processed_Images"
     # folder_nameの下に新しいフォルダーを作成（存在しない場合）
@@ -51,7 +50,6 @@ def main(args):
     for filepath in tqdm(images):
         img = cv2.imread(filepath)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        #print("size of image: ", gray.shape[::-1])
         # Find the chess board corners
         ret, corners = cv2.findChessboardCorners(gray, pattern_size)
         if ret:
@@ -68,28 +66,46 @@ def main(args):
             img_filename = os.path.basename(filepath)
             cv2.imwrite(os.path.join(output_path, img_filename), img)
             
-        #if count >= reference_img - 1:
-         #   break
         count += 1
 
     print("calculating camera parameter...")
     # 内部パラメータを計算
-    # ret: Root Men Square(RMS), mtx: カメラ行列, dist: 歪みパラメータ, rvecs: 回転ベクトル, tvecs: 並進ベクトル
+    # ret: Root Mean Square (RMS), mtx: カメラ行列, dist: 歪みパラメータ, rvecs: 回転ベクトル, tvecs: 並進ベクトル
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
     # 計算結果を保存
-    np.save(os.path.join(f"Parameters/{chessname}_mtx"), mtx)  # カメラ行列
-    np.save(os.path.join(f"Parameters/{chessname}_dist"), dist.ravel())  # 歪みパラメータ
-    np.save(os.path.join(f"Parameters/{chessname}_rvecs"), rvecs)  # 回転ベクトル
-    np.save(os.path.join(f"Parameters/{chessname}_tvecs"), tvecs)  # 並進ベクトル
+    param_path = os.path.join("Parameters", chessname)
+    if not os.path.exists("Parameters"):
+        os.makedirs("Parameters")
+    
+    np.save(f"{param_path}_mtx.npy", mtx)  # カメラ行列
+    np.save(f"{param_path}_dist.npy", dist.ravel())  # 歪みパラメータ
+    np.save(f"{param_path}_rvecs.npy", rvecs)  # 回転ベクトル
+    np.save(f"{param_path}_tvecs.npy", tvecs)  # 並進ベクトル
     # 計算結果を表示
     print("RMS = ", ret)
     with open(f"{folder_name}/RMS.txt", "w") as f:
         f.write(str(ret))
     print("mtx = \n", mtx)
     print("dist = ", dist.ravel())
+
+    # 画像の歪み補正
+    for filepath in tqdm(images):
+        img = cv2.imread(filepath)
+        h, w = img.shape[:2]
+        newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
+
+        # 補正
+        dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
+        x, y, w, h = roi
+        dst = dst[y:y+h, x:x+w]
+
+        # 補正後の画像を保存
+        img_filename = "calib_" + os.path.basename(filepath)
+        cv2.imwrite(os.path.join(output_path, img_filename), dst)
+        print(f"Calibrated image saved as {os.path.join(output_path, img_filename)}")
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', default='hoge', type=str,  help='whether ChessBoard_eye_left, ChessBoard_eye_right, ChessBoard_mouth_left or ChessBoard_mouth_right. Choose eye_left, eye_right, mouth_left or mouth_right.')
+    parser.add_argument('-f', required=True, type=str, help='Choose eye_left, eye_right, mouth_left or mouth_right.')
     main(parser.parse_args())

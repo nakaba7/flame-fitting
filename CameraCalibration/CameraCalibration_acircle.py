@@ -45,7 +45,7 @@ def main(args):
     print("ret:", ret)
     print("カメラ行列:\n", mtx)
     print("歪み係数:\n", dist)
-    
+    """
     # 画像の補正
     for fname in images:
         img = cv2.imread(fname)
@@ -57,7 +57,7 @@ def main(args):
         output_fname = os.path.join(output_dir, 'calib_' + os.path.basename(fname))
         cv2.imwrite(output_fname, dst)
         print(f"Calibrated image saved as {output_fname}")
-    
+    """
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
