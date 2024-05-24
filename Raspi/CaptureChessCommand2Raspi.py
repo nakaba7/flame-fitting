@@ -17,14 +17,7 @@ args:
 HOST_A = "192.168.100.34"  #Raspberry Pi 5(両目カメラ)
 HOST_B = "192.168.100.45"  #Raspberry Pi 3(口周辺カメラ)
 PORT = 46361              # Raspberry Pi側のスクリプトで使用しているポート番号
-sleeptime = 1
-
-def wait_for_ack(sock):
-    while True:
-        data = sock.recv(1024)
-        if data == b'captured':
-            print("Image captured.")
-            break
+sleeptime = 3
 
 def main(args):
     image_num = args.n
@@ -44,12 +37,14 @@ def main(args):
                     if i==image_num:
                         sa.sendall(b'q')
                         sb.sendall(b'q')
+                        sa.close()
+                        sb.close()
                         print(f"{image_num} images captured. Quitting...")
                         break
                     sa.sendall(b'c')
                     sb.sendall(b'c')
-                    wait_for_ack(sa)  # 合図を待つ
-                    wait_for_ack(sb)  # 合図を待つ
+                    #wait_for_ack(sa)  # 合図を待つ
+                    #wait_for_ack(sb)  # 合図を待つ
                     print(datetime.datetime.now())
                     print(f"Image {i+1} captured.")
                     i+=1
@@ -68,6 +63,7 @@ def main(args):
                 if i==image_num:
                     sa.sendall(b'q')
                     print(f"{image_num} images captured. Quitting...")
+                    sa.close()
                     break
                 sa.sendall(b'c')
                 #wait_for_ack(sa)  # 合図を待つ
@@ -89,9 +85,9 @@ def main(args):
                 if i==image_num:
                     sb.sendall(b'q')
                     print(f"{image_num} images captured. Quitting...")
+                    sb.close()
                     break
                 sb.sendall(b'c')
-                wait_for_ack(sb)  # 合図を待つ
                 print(datetime.datetime.now())
                 print(f"Image {i+1} captured.")
                 i+=1

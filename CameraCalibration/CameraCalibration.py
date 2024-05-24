@@ -88,7 +88,8 @@ def main(args):
         f.write(str(ret))
     print("mtx = \n", mtx)
     print("dist = ", dist.ravel())
-
+    print()
+    print("Start undistortion...")
     # 画像の歪み補正
     for filepath in tqdm(images):
         img = cv2.imread(filepath)
@@ -103,7 +104,7 @@ def main(args):
         # 補正後の画像を保存
         img_filename = "calib_" + os.path.basename(filepath)
         cv2.imwrite(os.path.join(output_path, img_filename), dst)
-        print(f"Calibrated image saved as {os.path.join(output_path, img_filename)}")
+        #print(f"Calibrated image saved as {os.path.join(output_path, img_filename)}")
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
