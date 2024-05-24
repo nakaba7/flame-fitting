@@ -80,7 +80,7 @@ def main(args):
 
     # サークルグリッドの設定
     square_size = 39.5  # サークルの間隔[mm]
-    pattern_size = (5, 11)  # サークルの数 (4列, 11行)
+    pattern_size = (5, 11)  # サークルの数 (5列, 11行)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
     pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
     pattern_points[:, 0] *= 2
