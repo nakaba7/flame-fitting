@@ -31,8 +31,8 @@ def transform_to_world(camera_points, world_R, world_T):
 camera1_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/lefteye/test0_0_annotated.npy")
 camera2_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/mouth/test0_annotated.npy")
 
-camera1_z_pixel = mm2pixel(30, 96)
-camera2_z_pixel = mm2pixel(45, 96)
+camera1_z_pixel = mm2pixel(35, 96)#35mmは「カメラとフェイスカバーの距離＋5mm」
+camera2_z_pixel = mm2pixel(45, 96)#45mmは鼻下とBracketの距離
 
 camera1_points = image2camera_coordinates(camera1_image_points, camera1_z_pixel, "CameraCalibration/Parameters/ChessBoard_eye_left_mtx.npy")
 camera2_points = image2camera_coordinates(camera2_image_points, camera2_z_pixel, "CameraCalibration/Parameters/ChessBoard_mouth_left_mtx.npy")
@@ -40,7 +40,7 @@ camera2_points = image2camera_coordinates(camera2_image_points, camera2_z_pixel,
 # Rotation matrix and translation vector from camera 1 to camera 2 (example values)
 R = np.load("CameraCalibration/Parameters/R_eye_left_mouth_left.npy")
 T = np.load("CameraCalibration/Parameters/T_eye_left_mouth_left.npy")
-
+#T*=10
 # Transform camera 2 points to camera 1 coordinates
 camera2_points_in_camera1 = transform_camera2_to_camera1(camera2_points, R, T)
 

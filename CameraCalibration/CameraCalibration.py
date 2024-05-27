@@ -24,7 +24,7 @@ def main(args):
         print("Invalid args. Choose eye_left, eye_right, mouth_left or mouth_right.")
         exit() 
 
-    square_size = 2.5      # 正方形の1辺のサイズ[cm]
+    square_size = 25      # 正方形の1辺のサイズ[mm]
     pattern_size = (6, 8)  # 交差ポイントの数
     chessname = f"ChessBoard_{args.f}"
     folder_name = chessname

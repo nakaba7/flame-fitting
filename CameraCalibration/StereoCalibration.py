@@ -9,7 +9,7 @@ from tqdm import tqdm
 2つのカメラで撮影した非対称サークルグリッドの画像からステレオキャリブレーションを行うスクリプト。
 
 Usage:
-    python StereoCalibration.py -f eye_left eye_right
+    python StereoCalibration.py -f eye_left mouth_left
 
 Args:
     -f: Enter the folder names of the images from the two cameras.
@@ -79,7 +79,7 @@ def main(args):
     dist_b = np.load(f"Parameters/ChessBoard_{camera1}_dist.npy")
 
     # サークルグリッドの設定
-    square_size = 3.95  # サークルの間隔[cm]
+    square_size = 39.5  # サークルの間隔[mm]
     pattern_size = (5, 11)  # サークルの数 (5列, 11行)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
     pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
@@ -174,7 +174,7 @@ def main(args):
             f.write(str(retval))
 
     distance = np.linalg.norm(T)
-    print(f"Distance between cameras: {distance * square_size} cm")
+    print(f"Distance between cameras: {distance * square_size}mm")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
