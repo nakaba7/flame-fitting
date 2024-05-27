@@ -3,7 +3,7 @@ import numpy as np
 import glob
 import os
 import argparse
-
+import matplotlib.pyplot as plt
 """
 2つのカメラで撮影した画像からホモグラフィ行列を計算するスクリプト
 usage:
@@ -79,14 +79,31 @@ def homography(args):
                 # 2Dポイントを2列の形式に変換
                 centers1 = centers1.reshape(-1, 2)
                 centers2 = centers2.reshape(-1, 2)
+                
                 # 対応する特徴点を使用してホモグラフィ行列を計算
                 H, status = cv2.findHomography(centers1, centers2)
 
                 # 特徴点を変換
-                centers1_3d = np.column_stack((centers1, np.ones((centers1.shape[0], 1))))  # 3Dに変換
-                transformed_points = cv2.perspectiveTransform(np.array([centers1_3d]), H)
+                transformed_points = cv2.perspectiveTransform(np.array([centers1]), H)
                 print("Transformed points from Camera 1 to Camera 2 coordinate system:")
                 print(transformed_points)
+                
+                # Matplotlibで結果を表示
+                plt.figure(figsize=(12, 6))
+
+                # 元の画像と特徴点
+                plt.subplot(1, 2, 1)
+                plt.imshow(cv2.cvtColor(img1, cv2.COLOR_BGR2RGB))
+                plt.scatter(centers1[:, 0], centers1[:, 1], c='r', marker='o')
+                plt.title('Original Image 1 with Features')
+
+                # 変換後の特徴点を元の画像2に重ねて表示
+                plt.subplot(1, 2, 2)
+                plt.imshow(cv2.cvtColor(img2, cv2.COLOR_BGR2RGB))
+                plt.scatter(centers2[:, 0], centers2[:, 1], c='r', marker='o')
+                plt.title('Transformed Features on Image 2')
+
+                plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
