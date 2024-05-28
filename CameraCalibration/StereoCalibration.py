@@ -174,10 +174,11 @@ def main(args):
             f.write(str(retval))
 
     distance = np.linalg.norm(T)
-    print(f"Distance between cameras: {distance * square_size}mm")
+    #print(f"Distance between cameras: {distance * square_size}mm")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', nargs=2, type=str, required=True, help='Enter the folder names of the images from the two cameras.')
     parser.add_argument('-d', default=False, type=bool, help='whether to undistort the images or not.')
     main(parser.parse_args())
+ 
