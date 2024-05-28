@@ -81,10 +81,31 @@ def pixel2mm(pixel, dpi):
     return pixel * 25.4 / dpi
 
 
-
 if __name__ == "__main__":
-    lefteye_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/lefteye/test0_0_annotated.npy")
-    lefteye_z_value = mm2pixel(5, 96)
-    lefteye_camera_matrix_file = 'CameraCalibration/Parameters/ChessBoard_eye_left_mtx.npy'
-    lefteye_camera_coords = image2camera_coordinates(lefteye_image_points, lefteye_z_value, lefteye_camera_matrix_file)
-    print(lefteye_camera_coords)
+    # テスト用のカメラ行列（3x3の行列）
+    camera_matrix = np.array([
+        [1000, 0, 320],
+        [0, 1000, 240],
+        [0, 0, 1]
+    ])
+
+    # テスト用の画像座標点（N x 2の行列）
+    image_points = np.array([
+        [400, 300],
+        [320, 240],
+        [250, 200]
+    ])
+
+    # カメラ行列をファイルに保存
+    camera_matrix_file = 'camera_matrix.npy'
+    np.save(camera_matrix_file, camera_matrix)
+
+    # 関数の動作をテストする
+    z_value = 200  # カメラ座標系のz座標（ピクセル単位）
+    camera_coordinates = image2camera_coordinates(image_points, z_value, camera_matrix_file)
+
+    # 結果を表示
+    print("Image Points:")
+    print(image_points)
+    print("\nCamera Coordinates:")
+    print(camera_coordinates)
