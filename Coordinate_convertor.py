@@ -1,12 +1,9 @@
 import numpy as np
 
-def image2camera_coordinates(image_points, z_value, camera_matrix_file):
+def image2camera_coordinates(image_points, z_value, camera_matrix, is_mouthcamera=False):
     """
     画像座標系からカメラ座標系への変換を行う。z_valueはカメラ座標系のz座標をピクセル単位で指定する。z座標はz_valueで固定される。
     """
-    # Load the camera matrix from the npy file
-    camera_matrix = np.load(camera_matrix_file)
-
     # Add a third coordinate of 1 to the image points (homogeneous coordinates)
     ones = np.ones((image_points.shape[0], 1))
     image_points_homogeneous = np.hstack((image_points, ones))
@@ -23,6 +20,10 @@ def image2camera_coordinates(image_points, z_value, camera_matrix_file):
     # Add the z value as the third coordinate
     camera_coords[:, 2] = z_value
     
+    if is_mouthcamera and len(camera_coords) > 2:
+        third_point_x = camera_coords[2, 0]
+        camera_coords[:, 0] -= third_point_x
+
     return camera_coords
 
 def camera2image_coordinates(camera_coords, camera_matrix_file):

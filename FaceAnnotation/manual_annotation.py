@@ -82,7 +82,7 @@ def annotation_onefolder(participant_name, facepart, reset=False):
     if not reset and os.path.exists(last_index_file):
         with open(last_index_file, 'r') as f:
             i = int(f.read().strip())
-
+    previous_i = i
     instructions = 'Commands: r - Reset, b - Back, s - Save and Stop, q - Quit'
     while i < len(facepart_image_list):
         img = facepart_image_list[i]
@@ -105,7 +105,10 @@ def annotation_onefolder(participant_name, facepart, reset=False):
         else:
             img_count += 1
             i += 1
-    print(f'{facepart} annotation finished')
+    if i != previous_i:
+        print(f'{facepart} annotation finished')
+    else:
+        print(f'No images found in {facepart} folder')
     return 'next'
 
 def reset_indices(participant_name):

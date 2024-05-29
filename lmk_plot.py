@@ -216,4 +216,3 @@ def plot_3d_3d_compare(landmarks_3d_1, landmarks_3d_2):
     fig.canvas.mpl_connect('key_press_event', on_key)
 
     plt.show()
-
