@@ -8,7 +8,7 @@ def transform_camera2_to_camera1(camera2_points, R, T):
     camera1_points = np.dot(R.T, (camera2_points - T.T).T).T
     return camera1_points
 
-camera_mouth_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/mouth/test0_annotated.npy")
+camera_mouth_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/mouth/a1_annotated.npy")
 camera_lefteye_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/lefteye/test0_0_annotated.npy")
 camera_righteye_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/righteye/test0_1_annotated.npy")
 
@@ -16,9 +16,10 @@ camera_mouth_mtx = np.load("CameraCalibration/Parameters/ChessBoard_mouth_left_m
 camera_lefteye_mtx = np.load("CameraCalibration/Parameters/ChessBoard_eye_left_mtx.npy")
 camera_righteye_mtx = np.load("CameraCalibration/Parameters/ChessBoard_eye_right_mtx.npy")
 
-camera_mouth_z_pixel = mm2pixel(35, 96)  # 鼻下とカメラの距離
-camera_lefteye_z_pixel = mm2pixel(23, 96)  # 左目とカメラの距離
-camera_righteye_z_pixel = mm2pixel(23, 96)
+#z座標をmm単位で指定
+camera_mouth_z_pixel = 45 
+camera_lefteye_z_pixel = 30
+camera_righteye_z_pixel = 30
 
 camera_mouth_points = image2camera_coordinates(camera_mouth_image_points, camera_mouth_z_pixel, camera_mouth_mtx, True)
 camera_lefteye_points = image2camera_coordinates(camera_lefteye_image_points, camera_lefteye_z_pixel, camera_lefteye_mtx, False)
@@ -53,14 +54,23 @@ ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 ax.legend()
 
+
+# Equal aspect ratio
+ax.set_box_aspect([1,1,1])  # Aspect ratio is 1:1:1
+
+# Set equal scaling
+scaling = np.array([getattr(ax, f'get_{dim}lim')() for dim in 'xyz'])
+ax.auto_scale_xyz(*[[np.min(scaling), np.max(scaling)]]*3)
+
 plt.show()
 
 all_camera_mouth_points_2d = lmk3d_2_2d(all_camera_mouth_points)
 
 # 2Dプロットを作成します
 plt.figure()
-plt.scatter(all_camera_mouth_points_2d[:, 0], all_camera_mouth_points_2d[:, 1], c='b', marker='o')
+plt.scatter(all_camera_mouth_points_2d[:, 0], -all_camera_mouth_points_2d[:, 1], c='b', marker='o')  # y軸を反転
 plt.xlabel('X')
 plt.ylabel('Y')
 plt.title('2D Projection of 3D Points (Viewed from Negative Z-axis)')
+plt.gca().set_aspect('equal', adjustable='box')  # Equal aspect ratio for 2D plot
 plt.show()

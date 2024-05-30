@@ -9,10 +9,11 @@ from tqdm import tqdm
 2つのカメラで撮影した非対称サークルグリッドの画像からステレオキャリブレーションを行うスクリプト。
 
 Usage:
-    python StereoCalibration.py -f eye_left mouth_left
+    python StereoCalibration.py -f mouth_left eye_left -d [False|True]
 
 Args:
     -f: Enter the folder names of the images from the two cameras.
+    -d: whether to undistort the images or not. Default is False.
 """
 
 # 画像を横に連結して対応点を線で結ぶ関数
@@ -78,14 +79,17 @@ def main(args):
     mtx_b = np.load(f"Parameters/ChessBoard_{camera1}_mtx.npy")
     dist_b = np.load(f"Parameters/ChessBoard_{camera1}_dist.npy")
 
-    # サークルグリッドの設定
-    square_size = 39.5  # サークルの間隔[mm]
+    circle_dist = 39.5  # サークルの間隔[mm]
     pattern_size = (5, 11)  # サークルの数 (5列, 11行)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
     pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
-    pattern_points[:, 0] *= 2
-    pattern_points *= square_size
 
+    pattern_points[:, 1] *= (circle_dist / 2) #y方向はサークルグリッドの間隔の半分にする
+    pattern_points[:, 0] *= circle_dist #x方向はそのままサークルグリッドの間隔にする
+    for i in range(pattern_size[1] // 2):
+        for j in range(pattern_size[0]):
+            pattern_points[2 * i * pattern_size[0] + j + pattern_size[0], 0] += (circle_dist / 2)#x方向にサークルグリッドの間隔の半分だサークルグリッドをずらす
+            
     # 各カメラからの画像セットへのパス
     images1 = sorted(glob.glob(f'StereoImage_{camera0}/*.jpg'))
     images2 = sorted(glob.glob(f'StereoImage_{camera1}/*.jpg'))
@@ -115,7 +119,7 @@ def main(args):
             img_file1 = os.path.join(f'StereoImage_{camera0}', mouth_img_filename_base)
         else:
             print("Invalid args. Choose eye_left, eye_right, mouth_left or mouth_right.")
-            exit()
+            
         #print("\nf1: {}\nf2: {}".format(img_file1, img_file2))
       
         if((os.path.exists(img_file1) == False) or (os.path.exists(img_file2) == False)):
@@ -138,7 +142,7 @@ def main(args):
             tmp = gray1.shape[::-1]
         ret1, centers1 = cv2.findCirclesGrid(gray1, pattern_size, None, flags=cv2.CALIB_CB_ASYMMETRIC_GRID)
         ret2, centers2 = cv2.findCirclesGrid(gray2, pattern_size, None, flags=cv2.CALIB_CB_ASYMMETRIC_GRID)
-        #print(ret1, ret2)
+        
         if ret1 and ret2:
             print(f"Circle grid corners found in both images {idx}.")
             objpoints.append(pattern_points)
@@ -150,7 +154,7 @@ def main(args):
                 draw_matches(img1, img2, centers1[:,0,:], centers2[:,0,:], os.path.join(output_folder, f"matches_{idx+1}.jpg"))
 
     retval, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate(
-        objpoints, imgpoints1, imgpoints2, mtx_a, dist_a, mtx_b, dist_b, tmp)
+        objpoints, imgpoints1, imgpoints2, mtx_a, dist_a, mtx_b, dist_b, tmp, flags=cv2.CALIB_USE_INTRINSIC_GUESS)
 
     R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(mtx_a, dist_a, mtx_b, dist_b, gray1.shape[::-1], R, T)
     print("Rotation Matrix:\n", R)
@@ -174,7 +178,7 @@ def main(args):
             f.write(str(retval))
 
     distance = np.linalg.norm(T)
-    #print(f"Distance between cameras: {distance * square_size}mm")
+    print(f"Distance between cameras: {distance}mm")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
