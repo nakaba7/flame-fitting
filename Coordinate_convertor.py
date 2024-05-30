@@ -1,4 +1,6 @@
 import numpy as np
+import cv2
+import matplotlib.pyplot as plt
 
 def image2camera_coordinates(image_points, z_value, camera_matrix, is_mouthcamera=False):
     """
@@ -69,6 +71,20 @@ def world2camera_coordinates(world_coords, rotation_matrix, translation_vector):
     
     return camera_coords
 
+def image2world_coordinates(img_points, inv_camera_matrix, rotation_matrix, tvec):
+    """
+    画像座標系からワールド座標系への変換を行う。cv2.calibrateCamera関数で得られるrvecs, tvecsを使用する。
+    
+    """
+    #inv_camera_matrix = np.linalg.inv(camera_matrix)
+    row = img_points.shape[0]
+    img_points_homogeneous = np.hstack((img_points, np.ones((row, 1))))
+    inv_rotation_matrix = np.linalg.inv(rotation_matrix)
+    camera_points = np.dot(inv_camera_matrix, img_points_homogeneous.T).T
+    world_points = np.dot(inv_rotation_matrix, (camera_points - tvec.T).T).T
+    #print(world_points)
+    return world_points
+
 def mm2pixel(mm, dpi):
     """
     mmをpixelに変換する。
@@ -83,30 +99,51 @@ def pixel2mm(pixel, dpi):
 
 
 if __name__ == "__main__":
-    # テスト用のカメラ行列（3x3の行列）
-    camera_matrix = np.array([
-        [1000, 0, 320],
-        [0, 1000, 240],
-        [0, 0, 1]
-    ])
+    lmk_2d = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/lefteye/test0_0_annotated.npy")
+    camera_mtx = np.load("CameraCalibration/Parameters/ChessBoard_eye_left_mtx.npy")
+    dist = np.load("CameraCalibration/Parameters/ChessBoard_eye_left_dist.npy")
+    rvecs = np.load("CameraCalibration/Parameters/ChessBoard_eye_left_rvecs.npy")
+    tvecs = np.load("CameraCalibration/Parameters/ChessBoard_eye_left_tvecs.npy")
+    rotation_matrix, _ = cv2.Rodrigues(rvecs[0])
+    tvec = tvecs[0]
+    inv_camera_mtx = np.linalg.inv(camera_mtx)
+    world_point = image2world_coordinates(lmk_2d, inv_camera_mtx, rotation_matrix, tvec)
+    # 3Dプロットを作成します
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-    # テスト用の画像座標点（N x 2の行列）
-    image_points = np.array([
-        [400, 300],
-        [320, 240],
-        [250, 200]
-    ])
+    # カメラ1のポイントをプロット
+    ax.scatter(world_point[:, 0], world_point[:, 1], world_point[:, 2], c='b', marker='o', label='World Points')
 
-    # カメラ行列をファイルに保存
-    camera_matrix_file = 'camera_matrix.npy'
-    np.save(camera_matrix_file, camera_matrix)
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.legend()
 
-    # 関数の動作をテストする
-    z_value = 200  # カメラ座標系のz座標（ピクセル単位）
-    camera_coordinates = image2camera_coordinates(image_points, z_value, camera_matrix_file)
+    # Equal aspect ratio
+    ax.set_box_aspect([1,1,1])  # Aspect ratio is 1:1:1
 
-    # 結果を表示
-    print("Image Points:")
-    print(image_points)
-    print("\nCamera Coordinates:")
-    print(camera_coordinates)
+    # Set equal scaling
+    scaling = np.array([getattr(ax, f'get_{dim}lim')() for dim in 'xyz'])
+    ax.auto_scale_xyz(*[[np.min(scaling), np.max(scaling)]]*3)
+    # プロットデータの範囲を計算
+    x_limits = (np.min(world_point[:, 0]), np.max(world_point[:, 0]))
+    y_limits = (np.min(world_point[:, 1]), np.max(world_point[:, 1]))
+    z_limits = (np.min(world_point[:, 2]), np.max(world_point[:, 2]))
+
+    # 各軸の表示範囲を設定
+    ax.set_xlim(x_limits[0] - 0.1 * np.ptp(x_limits), x_limits[1] + 0.1 * np.ptp(x_limits))
+    ax.set_ylim(y_limits[0] - 0.1 * np.ptp(y_limits), y_limits[1] + 0.1 * np.ptp(y_limits))
+    ax.set_zlim(z_limits[0] - 0.1 * np.ptp(z_limits), z_limits[1] + 0.1 * np.ptp(z_limits))
+    plt.show()
+
+    # 2Dプロットを作成します
+    plt.figure()
+    plt.scatter(lmk_2d[:, 0], -lmk_2d[:, 1], c='b', marker='o')  # y軸を反転
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.title('2D Projection of 3D Points (Viewed from Negative Z-axis)')
+    plt.gca().set_aspect('equal', adjustable='box')  # Equal aspect ratio for 2D plot
+    plt.show()
+
+

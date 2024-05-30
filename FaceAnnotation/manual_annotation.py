@@ -6,9 +6,10 @@ import re
 """
 手動で顔の特徴点検出を行うスクリプト. 左目, 右目, 口の順番で行う.
 Usage:
-    python manual_annotation.py -p PARTICIPANTNAME
+    python manual_annotation.py -p PARTICIPANTNAME -r [False|True]
 Args:   
     -p: 参加者名を指定
+    -r: インデックスをリセットするかどうかを指定. デフォルトはFalse.
 """
 
 def manual_annotation(input_path, output_img_path, output_npy_path, index, total, instructions):
@@ -33,32 +34,25 @@ def manual_annotation(input_path, output_img_path, output_npy_path, index, total
         cv2.imshow('image', img_display)
         cv2.setMouseCallback('image', click_event)
         key = cv2.waitKey(0) & 0xFF
-
         if key == ord('r'):
             img = img_original.copy()
             facial_landmarks = []
             print("Resetting landmarks...")
-
         elif key == ord('b'):
             cv2.destroyAllWindows()
             return 'back'
-
         elif key == ord('s'):
             cv2.destroyAllWindows()
             return 'stop'
-
         elif key == ord('q'):
             cv2.destroyAllWindows()
             return 'quit'
-
         else:
             break
-
     cv2.destroyAllWindows()
 
     print("Selected Facial Landmarks:")
     print(facial_landmarks)
-
     np.save(output_npy_path, np.array(facial_landmarks))
     cv2.imwrite(output_img_path, img)
     print(f'Annotated image saved as {output_img_path}')
@@ -78,7 +72,6 @@ def annotation_onefolder(participant_name, facepart, reset=False):
     last_index_file = os.path.join(output_img_dir, 'last_index.txt')
     img_count = 0
     i = 0
-
     if not reset and os.path.exists(last_index_file):
         with open(last_index_file, 'r') as f:
             i = int(f.read().strip())
@@ -121,6 +114,10 @@ def reset_indices(participant_name):
 
 def main(args):
     participant_name = args.p
+    reset = args.r
+    if reset:
+        reset_indices(participant_name)
+        print("Indices reset.")
     if annotation_onefolder(participant_name, "lefteye") == 'quit':
         return
     if annotation_onefolder(participant_name, "righteye") == 'quit':
@@ -130,5 +127,6 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', default='hoge', type=str, help='participant name')
+    parser.add_argument('-p', type=str, help='participant name')
+    parser.add_argument('-r', default=False, type=bool, help='reset indices')
     main(parser.parse_args())
