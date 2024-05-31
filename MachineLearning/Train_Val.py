@@ -20,8 +20,8 @@ Usage:
 class CustomDataset(Dataset):
     def __init__(self, input_dir, target_dir, data_size):
         self.datasize = data_size
-        self.inputs = self.load_data(input_dir, f"inputs_cache_{data_size}.npy", '2d')
-        self.targets = self.load_data(target_dir, f"targets_cache_{data_size}.npy", '3d')
+        self.inputs = self.load_data(input_dir, f"models/inputs_cache_{data_size}.npy", '2d')
+        self.targets = self.load_data(target_dir, f"models/targets_cache_{data_size}.npy", '3d')
         self.targets = self.targets[:, :, 2]  # 3次元目のみを取得
         self.targets = np.expand_dims(self.targets, axis=2)
         #print("targets shape:", self.targets.shape)
@@ -74,7 +74,7 @@ def main():
     dataset_size = 200000
     #model_path = f'Simple_2d_2_3d_{dataset_size}.pth'
     if output_dim == 1:
-        model_path = f'DepthOnly_{dataset_size}.pth'
+        model_path = f'models/DepthOnly_{dataset_size}.pth'
     elif output_dim == 3:
         model_path = f'2d_2_3d_{dataset_size}.pth'
     epoch_num = 1000

@@ -8,6 +8,7 @@ from Convert.Lmk2d_2_3d import lmk2d_2_3d
 import os
 """
 口, 左目, 右目の2次元ランドマークを3次元ランドマークに変換し, 口のカメラ座標系に統一するスクリプト.
+統一後の2次元ランドマークを保存する.
 
 Usage:
     python StereoAlignment.py
