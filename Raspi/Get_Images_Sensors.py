@@ -5,17 +5,13 @@ import argparse
 import sys
 import os
 import csv
-
-# 親ディレクトリのパスを取得
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-# 親ディレクトリをsys.pathに追加
 sys.path.append(parent_dir)
-
 from AffectiveHMD.Quest2_affectiveHMD import setup, write_csv
 """
 ラズパイ2つから画像データ, Arduinoからフォトリフレクタの値を取得するスクリプト.
 usage:
-    python main.py -n IMAGENUM -p PARTICIPANTNAME
+    python Get_Images_Sensors.py -n IMAGENUM -p PARTICIPANTNAME
 args:
     -n: 画像をキャプチャする回数を指定
     -p: 参加者名を指定
@@ -23,13 +19,14 @@ args:
 
 # Raspberry Piのホスト名またはIPアドレスとポート番号
 HOST_A = "192.168.100.34"  #Raspberry Pi 5(両目カメラ)
-HOST_B = "192.168.100.45"  #Raspberry Pi 3(口周辺カメラ)
+HOST_B = "192.168.100.41"  #Raspberry Pi 3(口周辺カメラ)
 PORT = 46361              # Raspberry Pi側のスクリプトで使用しているポート番号
 sleeptime = 0.2
 
 def wait_for_ack(sock):
     while True:
         data = sock.recv(1024)
+        #print(data)
         if data == b'captured':
             break
 
@@ -80,6 +77,6 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n', default=100 , type=int,  help='Enter the image num to capture.')
-    parser.add_argument('-p', default='hoge', type=str,  help='Enter the participant name.')
+    parser.add_argument('-n', default=10 , type=int,  help='Enter the image num to capture.')
+    parser.add_argument('-p', type=str,  help='Enter the participant name.')
     main(parser.parse_args())

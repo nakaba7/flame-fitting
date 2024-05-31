@@ -22,6 +22,7 @@ def image2camera_coordinates(image_points, z_value, camera_matrix, is_mouthcamer
     # Add the z value as the third coordinate
     camera_coords[:, 2] = z_value
     
+    #口のランドマークの場合、鼻下部中央の点のx座標をy軸上へ移動させる
     if is_mouthcamera and len(camera_coords) > 2:
         third_point_x = camera_coords[2, 0]
         camera_coords[:, 0] -= third_point_x

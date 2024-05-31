@@ -4,15 +4,15 @@ import os
 import argparse
 import re
 """
-手動で顔の特徴点検出を行うスクリプト. 左目, 右目, 口の順番で行う.
+手動で顔の特徴点検出を行うスクリプト. 左目, 右目, 口の順番で行う. 
 Usage:
-    python manual_annotation.py -p PARTICIPANTNAME -r [False|True]
+    python FaceAnnotation/manual_annotation.py -p PARTICIPANTNAME -r [False|True]
 Args:   
     -p: 参加者名を指定
     -r: インデックスをリセットするかどうかを指定. デフォルトはFalse.
 """
 
-def manual_annotation(input_path, output_img_path, output_npy_path, index, total, instructions):
+def manual_annotation(img, output_img_path, output_npy_path, index, total, instructions):
     facial_landmarks = []
 
     def click_event(event, x, y, flags, params):
@@ -21,7 +21,6 @@ def manual_annotation(input_path, output_img_path, output_npy_path, index, total
             facial_landmarks.append((x, y))
             cv2.imshow('image', img)
 
-    img = cv2.imread(input_path)
     img_original = img.copy()
 
     cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
@@ -79,8 +78,9 @@ def annotation_onefolder(participant_name, facepart, reset=False):
     instructions = 'Commands: r - Reset, b - Back, s - Save and Stop, q - Quit'
     while i < len(facepart_image_list):
         img = facepart_image_list[i]
-        input_img = os.path.join(input_dir_path, img)
-        print(input_img)
+        input_img_path = os.path.join(input_dir_path, img)
+        print(input_img_path)
+        input_img = cv2.imread(input_img_path)
         result = manual_annotation(input_img, os.path.join(output_img_dir, f'{img[:-4]}_annotated.jpg'), os.path.join(output_npy_dir, f'{img[:-4]}_annotated.npy'), i, len(facepart_image_list), instructions)
         if result == 'back':
             i = max(0, i - 1)
@@ -108,6 +108,9 @@ def reset_indices(participant_name):
     parts = ["lefteye", "righteye", "mouth"]
     for part in parts:
         output_img_dir = f'AnnotatedData/{participant_name}_Annotated/Images/{part}'
+        if not os.path.exists(output_img_dir):
+            print(f'No index file found for {part}')
+            continue
         last_index_file = os.path.join(output_img_dir, 'last_index.txt')
         with open(last_index_file, 'w') as f:
             f.write('0')
@@ -115,15 +118,13 @@ def reset_indices(participant_name):
 def main(args):
     participant_name = args.p
     reset = args.r
-    if reset:
+    if reset :
         reset_indices(participant_name)
         print("Indices reset.")
-    if annotation_onefolder(participant_name, "lefteye") == 'quit':
-        return
-    if annotation_onefolder(participant_name, "righteye") == 'quit':
-        return
-    if annotation_onefolder(participant_name, "mouth") == 'quit':
-        return
+        
+    for part in ["lefteye", "righteye", "mouth"]:
+        if annotation_onefolder(participant_name, part) == 'quit':
+            return
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

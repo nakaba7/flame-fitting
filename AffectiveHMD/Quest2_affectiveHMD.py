@@ -71,7 +71,7 @@ def write_csv(ser, csvwriter):
             dataList = [int(x) for x in dataList if x.isdigit()]
             if dataList:  # データリストが空でない場合
                 csvwriter.writerow(dataList)
-                print(dataList)
+                #print(dataList)
         else:
             print("データが送信されていません。")
             csvwriter.writerow(error_list) #行ずれを回避するため

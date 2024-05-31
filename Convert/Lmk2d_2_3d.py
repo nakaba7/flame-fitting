@@ -3,9 +3,14 @@ import torch.nn as nn
 import numpy as np
 import os
 import glob
+import sys
+# 親ディレクトリのパスを取得
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+# 親ディレクトリをsys.pathに追加
+sys.path.append(parent_dir)
 from MachineLearning.SimpleNet import DepthPredictionModel
 from MachineLearning.CNNModel import CNNPredictor
-from lmk_plot import plot_3lmk
+from Lmk_plot import plot_3lmk
 
 def lmk2d_2_3d(model_path, landmark_2d):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

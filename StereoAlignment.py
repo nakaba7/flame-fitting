@@ -1,8 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Coordinate_convertor import image2camera_coordinates, mm2pixel
-import cv2
+from Coordinate_convertor import image2camera_coordinates
 from Convert.Lmk3d_2_2d import lmk3d_2_2d
+from Lmk_plot import plot_2d, plot_2d_3d_compare
+import glob
+"""
+口, 左目, 右目の2次元ランドマークを3次元ランドマークに変換し, 口のカメラ座標系に統一するスクリプト.
+
+Usage:
+    python StereoAlignment.py
+"""
 
 def transform_camera2_to_camera1(camera2_points, R, T):
     # Apply rotation and translation to transform camera 2 points to camera 1 coordinates
@@ -14,12 +21,13 @@ def lmk_sort(lmk_2d):
     顔の2次元ランドマークをflame-fittingの順番に並び替える関数. add_nose_lmk関数の後に使用する.
     """
     new_lmks = lmk_2d.copy()
-    new_lmks[5:10] = lmk_2d[42:47]#左眉毛
-    new_lmks[10:14] = lmk_2d[47:51]#鼻上部
-    new_lmks[14:19] = lmk_2d[11:16]#鼻下部   
-    new_lmks[19:25] = lmk_2d[5:11]#右目
-    new_lmks[25:31] = lmk_2d[36:42]#左目
-    new_lmks[31:51] = lmk_2d[16:36]#口
+    new_lmks[0:5] = lmk_2d[36:41]#右眉毛
+    new_lmks[5:10] = lmk_2d[25:30]#左眉毛
+    new_lmks[10:14] = lmk_2d[47:51]#鼻上部   
+    new_lmks[14:19] = lmk_2d[0:5]#鼻下部
+    new_lmks[19:25] = lmk_2d[41:47]#右目
+    new_lmks[25:31] = lmk_2d[30:36]#左目
+    new_lmks[31:51] = lmk_2d[5:25]#口
     return new_lmks
 
 def add_nose_lmk(presort_lmk_2d):
@@ -30,9 +38,11 @@ def add_nose_lmk(presort_lmk_2d):
     """
     # 30番目の点と44番目の点の中点を計算
     midpoint = (presort_lmk_2d[30] + presort_lmk_2d[44]) / 2
-
+    # 鼻の中央の点から上方向に向かうようにする
+    midpoint[0] = presort_lmk_2d[2][0]
     # 中点から13番の方向へ一定間隔で3つの点を追加
-    direction = presort_lmk_2d[2] - midpoint
+    direction = (presort_lmk_2d[2] - midpoint)
+    
     interval = np.linalg.norm(direction) / 4  # 一定間隔を計算
     unit_direction = direction / np.linalg.norm(direction)
 
@@ -43,83 +53,103 @@ def add_nose_lmk(presort_lmk_2d):
     presort_lmk_2d = np.concatenate((presort_lmk_2d, new_points), axis=0)
     return presort_lmk_2d
 
-camera_mouth_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/mouth/a1_annotated.npy")
-camera_lefteye_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/lefteye/test6_0_annotated.npy")
-camera_righteye_image_points = np.load("AnnotatedData/Nakabayashi_Annotated/NPYs/righteye/test6_1_annotated.npy")
+def adjust_eye_zpos(camera_eye_points, eye_side):
+    """
+    目のランドマークのz座標を調整する関数. 
+    Args:
+        camera_eye_points: カメラ座標系の目のランドマークの配列
+        eye_side: 'left'または'right'を指定
+    """
+    middle_eye_offset = 5
+    inner_corner_offset = 12
 
-camera_mouth_mtx = np.load("CameraCalibration/Parameters/ChessBoard_mouth_left_mtx.npy")
-camera_lefteye_mtx = np.load("CameraCalibration/Parameters/ChessBoard_eye_left_mtx.npy")
-camera_righteye_mtx = np.load("CameraCalibration/Parameters/ChessBoard_eye_right_mtx.npy")
+    if eye_side == 'left':
+        #眉毛
+        camera_eye_points[0][2] += inner_corner_offset
+        camera_eye_points[1][2] += middle_eye_offset
+        #目
+        camera_eye_points[5][2] += inner_corner_offset
+        camera_eye_points[6][2] += middle_eye_offset
+        camera_eye_points[10][2] += middle_eye_offset
+    elif eye_side == 'right':
+        #眉毛
+        camera_eye_points[3][2] += middle_eye_offset
+        camera_eye_points[4][2] += inner_corner_offset
+        #目
+        camera_eye_points[7][2] += middle_eye_offset
+        camera_eye_points[8][2] += inner_corner_offset
+        camera_eye_points[9][2] += middle_eye_offset
+    else:
+        raise ValueError("Invalid eye side. Choose 'left' or 'right'.")
+    return camera_eye_points
 
-#z座標をmm単位で指定
-camera_mouth_z_pixel = 50 
-camera_lefteye_z_pixel = 35
-camera_righteye_z_pixel = 35
+def stereo_alignment(image_mouth_points, image_lefteye_points, image_righteye_points, mouth_mtx, lefteye_mtx, righteye_mtx, R_mouth2lefteye, T_mouth2lefteye, R_mouth2righteye, T_mouth2righteye):
+    """
+    ステレオカメラのキャリブレーションパラメータを使用して口と目のランドマークを合わせる関数.
+    """
+    #z座標をmm単位で指定
+    camera_mouth_z_pixel = 45 
+    camera_lefteye_z_pixel = 30
+    camera_righteye_z_pixel = 30
 
-camera_mouth_points = image2camera_coordinates(camera_mouth_image_points, camera_mouth_z_pixel, camera_mouth_mtx, True)
-camera_lefteye_points = image2camera_coordinates(camera_lefteye_image_points, camera_lefteye_z_pixel, camera_lefteye_mtx, False)
-camera_righteye_points = image2camera_coordinates(camera_righteye_image_points, camera_righteye_z_pixel, camera_righteye_mtx, False)
+    #画像座標系からカメラ座標系に変換
+    camera_mouth_points = image2camera_coordinates(image_mouth_points, camera_mouth_z_pixel, mouth_mtx, True)
+    camera_lefteye_points = image2camera_coordinates(image_lefteye_points, camera_lefteye_z_pixel, lefteye_mtx, False)
+    camera_righteye_points = image2camera_coordinates(image_righteye_points, camera_righteye_z_pixel, righteye_mtx, False)
 
-R_mouth2lefteye = np.load("CameraCalibration/Parameters/R_mouth_left_eye_left.npy")
-T_mouth2lefteye = np.load("CameraCalibration/Parameters/T_mouth_left_eye_left.npy")
+    camera_lefteye_points = adjust_eye_zpos(camera_lefteye_points, 'left')
+    camera_righteye_points = adjust_eye_zpos(camera_righteye_points, 'right')
 
-R_mouth2righteye = np.load("CameraCalibration/Parameters/R_mouth_right_eye_right.npy")
-T_mouth2righteye = np.load("CameraCalibration/Parameters/T_mouth_right_eye_right.npy")
+    #口カメラのカメラ座標系へ統一
+    camera_lefteye_points_in_camera_mouth = transform_camera2_to_camera1(camera_lefteye_points, R_mouth2lefteye, T_mouth2lefteye)
+    camera_righteye_points_in_camera_mouth = transform_camera2_to_camera1(camera_righteye_points, R_mouth2righteye, T_mouth2righteye)
 
-# Transform camera 2 points to camera 1 coordinates
-camera_lefteye_points_in_camera_mouth = transform_camera2_to_camera1(camera_lefteye_points, R_mouth2lefteye, T_mouth2lefteye)
-camera_righteye_points_in_camera_mouth = transform_camera2_to_camera1(camera_righteye_points, R_mouth2righteye, T_mouth2righteye)
+    #3次元ランドマークを結合
+    all_camera_mouth_points = np.vstack((camera_mouth_points, camera_lefteye_points_in_camera_mouth, camera_righteye_points_in_camera_mouth))
 
-# Combine all points in camera 1 coordinates
-all_camera_mouth_points = np.vstack((camera_mouth_points, camera_lefteye_points_in_camera_mouth, camera_righteye_points_in_camera_mouth))
+    return all_camera_mouth_points
 
-# 3Dプロットを作成します
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+def make_lmk2d_for_flamefitting(all_camera_mouth_points_3d):
+    """
+    3Dランドマークをflame-fittingの2Dランドマークに変換する関数.
+    """
+    all_camera_mouth_points_2d = lmk3d_2_2d(all_camera_mouth_points_3d)
+    all_camera_mouth_points_2d = add_nose_lmk(all_camera_mouth_points_2d)
+    all_camera_mouth_points_2d = lmk_sort(all_camera_mouth_points_2d)
+    return all_camera_mouth_points_2d
 
-# カメラ1のポイントをプロット
-ax.scatter(camera_mouth_points[:, 0], camera_mouth_points[:, 1], camera_mouth_points[:, 2], c='b', marker='o', label='Camera 1 Points')
+if __name__ == '__main__':
+    participant_name = "Nakabayashi"
+    image_mouth_points_path_list = glob.glob(f'AnnotatedData/{participant_name}_Annotated/NPYs/mouth/*.npy')
+    image_lefteye_points_path_list = glob.glob(f'AnnotatedData/{participant_name}_Annotated/NPYs/lefteye/*.npy')
+    image_righteye_points_path_list = glob.glob(f'AnnotatedData/{participant_name}_Annotated/NPYs/righteye/*.npy')
 
-# カメラ2のポイントをプロット（カメラ1座標系に変換済み）
-ax.scatter(camera_lefteye_points_in_camera_mouth[:, 0], camera_lefteye_points_in_camera_mouth[:, 1], camera_lefteye_points_in_camera_mouth[:, 2], c='r', marker='^', label='Camera 2 Points in Camera 1')
-ax.scatter(camera_righteye_points_in_camera_mouth[:, 0], camera_righteye_points_in_camera_mouth[:, 1], camera_righteye_points_in_camera_mouth[:, 2], c='g', marker='^', label='Camera 3 Points in Camera 1')
+    mouth_mtx = np.load("CameraCalibration/Parameters/ChessBoard_mouth_left_mtx.npy")
+    lefteye_mtx = np.load("CameraCalibration/Parameters/ChessBoard_eye_left_mtx.npy")
+    righteye_mtx = np.load("CameraCalibration/Parameters/ChessBoard_eye_right_mtx.npy")
 
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-ax.legend()
+    R_mouth2lefteye = np.load("CameraCalibration/Parameters/R_mouth_left_eye_left.npy")
+    T_mouth2lefteye = np.load("CameraCalibration/Parameters/T_mouth_left_eye_left.npy")
 
+    R_mouth2righteye = np.load("CameraCalibration/Parameters/R_mouth_right_eye_right.npy")
+    T_mouth2righteye = np.load("CameraCalibration/Parameters/T_mouth_right_eye_right.npy")
 
-# Equal aspect ratio
-ax.set_box_aspect([1,1,1])  # Aspect ratio is 1:1:1
+    for image_mouth_points_path, image_lefteye_points_path, image_righteye_points_path in zip(image_mouth_points_path_list, image_lefteye_points_path_list, image_righteye_points_path_list):
+        image_mouth_points = np.load(image_mouth_points_path)
+        image_lefteye_points = np.load(image_lefteye_points_path)
+        image_righteye_points = np.load(image_righteye_points_path)
 
-# Set equal scaling
-scaling = np.array([getattr(ax, f'get_{dim}lim')() for dim in 'xyz'])
-ax.auto_scale_xyz(*[[np.min(scaling), np.max(scaling)]]*3)
+        all_camera_mouth_points_3d = stereo_alignment(image_mouth_points, image_lefteye_points, image_righteye_points, mouth_mtx, lefteye_mtx, righteye_mtx, R_mouth2lefteye, T_mouth2lefteye, R_mouth2righteye, T_mouth2righteye)
+        all_camera_mouth_points_2d = make_lmk2d_for_flamefitting(all_camera_mouth_points_3d)
+        plot_2d_3d_compare(all_camera_mouth_points_2d, all_camera_mouth_points_3d)
+        
 
-plt.show()
-
-all_camera_mouth_points_2d = lmk3d_2_2d(all_camera_mouth_points)
-all_camera_mouth_points_2d = add_nose_lmk(all_camera_mouth_points_2d)
-#all_camera_mouth_points_2d = lmk_sort(all_camera_mouth_points_2d)
 """
 rvec = np.load("CameraCalibration/Parameters/ChessBoard_mouth_left_rvecs.npy")[3]
 tvec = np.load("CameraCalibration/Parameters/ChessBoard_mouth_left_tvecs.npy")[3]
 print(rvec)
 print(tvec)
-all_camera_mouth_points_2d, _ = cv2.projectPoints(all_camera_mouth_points, rvec, tvec, camera_mouth_mtx, None)
+all_camera_mouth_points_2d, _ = cv2.projectPoints(all_camera_mouth_points, rvec, tvec, mouth_mtx, None)
 all_camera_mouth_points_2d = np.squeeze(all_camera_mouth_points_2d, axis=1)
 """
-# 2Dプロットを作成します
-plt.figure()
-plt.scatter(all_camera_mouth_points_2d[:, 0], -all_camera_mouth_points_2d[:, 1], c='b', marker='o')  # y軸を反転
 
-# 各点の近くにインデックス番号を表示
-for i, point in enumerate(all_camera_mouth_points_2d):
-    plt.text(point[0], -point[1], str(i), fontsize=9, ha='right', va='bottom')
-
-plt.xlabel('X')
-plt.ylabel('Y')
-plt.title('2D Projection of 3D Points (Viewed from Negative Z-axis)')
-plt.gca().set_aspect('equal', adjustable='box')  # Equal aspect ratio for 2D plot
-plt.show()
