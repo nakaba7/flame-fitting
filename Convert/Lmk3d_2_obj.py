@@ -1,19 +1,27 @@
 import numpy as np
 import chumpy as ch
 from os.path import join, basename
-from smpl_webuser.serialization import load_model
-from fitting.landmarks import load_embedding, landmark_error_3d
-from fitting.util import load_binary_pickle, write_simple_obj, safe_mkdir, get_unit_factor
 import argparse
 import scipy.sparse as sp
 import glob
+import sys
+import os
+# 親ディレクトリのパスを取得
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+# 親ディレクトリをsys.pathに追加
+sys.path.append(parent_dir)
+from smpl_webuser.serialization import load_model
+from fitting.landmarks import load_embedding, landmark_error_3d
+from fitting.util import load_binary_pickle, write_simple_obj, safe_mkdir, get_unit_factor
+
 """
 指定したディレクトリ下の3次元ランドマークをFLAMEモデルにフィッティングし、objファイルとして保存するスクリプト
 
 Usage:
-    python lmk3d_2_obj.py -f [3Dランドマークディレクトリ]
+    python Convert/lmk3d_2_obj.py -f [3Dランドマークディレクトリ] -o [出力ディレクトリ]
 Args:
     -f: 3次元ランドマークを含むディレクトリ
+    -o: 出力ディレクトリ
 """
 
 def fit_lmk3d( lmk_3d,                   # input landmark 3d
@@ -176,6 +184,6 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', default='output_landmark/estimated_3d/test', type=str,  help='directory of the 3D landmarks.')
+    parser.add_argument('-f', default='output_landmark/estimated_3d', type=str,  help='directory of the 3D landmarks.')
     parser.add_argument('-o', default='../Collect FLAME Landmark/Assets/Objects/FLAMEmodel', type=str,  help='output directory')
     main(parser.parse_args())

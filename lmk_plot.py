@@ -2,9 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
-import matplotlib.pyplot as plt
-import numpy as np
-
 def plot_2d(landmarks_2d, index=False):
     """
     2次元ランドマークをプロットする関数.
@@ -12,7 +9,7 @@ def plot_2d(landmarks_2d, index=False):
     """
     # プロット
     plt.figure(figsize=(10, 10))
-    plt.scatter(landmarks_2d[:, 0], landmarks_2d[:, 1], s=15, c='r')
+    plt.scatter(landmarks_2d[:, 0], landmarks_2d[:, 1], s=20, c='r')
 
     if index:
         for idx, (x, y) in enumerate(landmarks_2d):
@@ -35,7 +32,7 @@ def plot_3d(landmarks_3d, index=False):
     
     # 3Dランドマークのプロット
     ax1 = fig.add_subplot(122, projection='3d')
-    ax1.scatter(landmarks_3d[:, 0], landmarks_3d[:, 1], landmarks_3d[:, 2], s=15, c='r')
+    ax1.scatter(landmarks_3d[:, 0], landmarks_3d[:, 1], landmarks_3d[:, 2], s=20, c='r')
     if index:
         for i, txt in enumerate(range(landmarks_3d.shape[0])):
             ax1.text(landmarks_3d[i, 0], landmarks_3d[i, 1], landmarks_3d[i, 2], txt)
@@ -72,7 +69,7 @@ def plot_3lmk(landmark_2d, landmark_3d, target_3d):
     
     # 2D Landmarks plot
     ax1 = fig.add_subplot(131)  # 通常の2次元プロット
-    ax1.scatter(landmark_2d[:, 0], landmark_2d[:, 1], c='r', label='2D Landmarks')
+    ax1.scatter(landmark_2d[:, 0], landmark_2d[:, 1], s=20, c='r', label='2D Landmarks')
     for i, txt in enumerate(landmark_2d):
         ax1.annotate(str(i), (landmark_2d[i, 0], landmark_2d[i, 1]), textcoords="offset points", xytext=(0,5), ha='center')
     ax1.set_title('2D Landmarks')
@@ -103,7 +100,6 @@ def plot_3lmk(landmark_2d, landmark_3d, target_3d):
     ax3.legend()
 
     plt.show()
-
 
 def plot_2d_3d(landmarks_3d):
     """
@@ -150,17 +146,17 @@ def plot_2d_3d_compare(landmarks_2d, landmarks_3d):
     
     # 2Dランドマークのプロット
     ax1 = fig.add_subplot(121)
-    ax1.scatter(landmarks_2d[:, 0], landmarks_2d[:, 1], s=15, c='r')
+    ax1.scatter(landmarks_2d[:, 0], landmarks_2d[:, 1], s=20, c='r')
     for i, txt in enumerate(range(landmarks_2d.shape[0])):
         ax1.annotate(txt, (landmarks_2d[i, 0], landmarks_2d[i, 1]))
     ax1.set_xlabel('X')
     ax1.set_ylabel('Y')
     ax1.set_title('2D Landmarks')
-    ax1.invert_yaxis()
+    #ax1.invert_yaxis()
     
     # 3Dランドマークのプロット
     ax2 = fig.add_subplot(122, projection='3d')
-    ax2.scatter(landmarks_3d[:, 0], landmarks_3d[:, 1], landmarks_3d[:, 2], s=15, c='r')
+    ax2.scatter(landmarks_3d[:, 0], landmarks_3d[:, 1], landmarks_3d[:, 2], s=20, c='r')
     for i, txt in enumerate(range(landmarks_3d.shape[0])):
         ax2.text(landmarks_3d[i, 0], landmarks_3d[i, 1], landmarks_3d[i, 2], txt)
     ax2.set_xlabel('X')

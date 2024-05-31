@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # model.trans[:] = np.random.randn( model.trans.size ) * 0.01   # you may also manipulate the translation of mesh
 
     # Write to an .obj file
-    outmesh_dir = './output'
+    outmesh_dir = './output_obj'
     safe_mkdir( outmesh_dir )
     outmesh_path = join( outmesh_dir, 'hello_flame.obj')
     write_simple_obj( mesh_v=model.r, mesh_f=model.f, filepath=outmesh_path )

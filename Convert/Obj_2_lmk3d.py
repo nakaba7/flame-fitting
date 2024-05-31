@@ -53,7 +53,7 @@ def main():
     loop_num = config.n
     #output_obj_dir = './output'
     #output_lmk_dir = './output_landmark/3d'
-    output_obj_dir = './output/test'
+    output_obj_dir = './output_obj/test'
     output_lmk_dir = './output_landmark/3d/test'
     if not os.path.exists(output_obj_dir):
         os.makedirs(output_obj_dir)

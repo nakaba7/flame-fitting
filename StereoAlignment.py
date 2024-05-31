@@ -1,9 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Coordinate_convertor import image2camera_coordinates
+from Convert.Coordinate_convertor import image2camera_coordinates
 from Convert.Lmk3d_2_2d import lmk3d_2_2d
 from Lmk_plot import plot_2d, plot_2d_3d_compare
 import glob
+from Convert.Lmk2d_2_3d import lmk2d_2_3d
+import os
 """
 口, 左目, 右目の2次元ランドマークを3次元ランドマークに変換し, 口のカメラ座標系に統一するスクリプト.
 
@@ -116,6 +118,14 @@ def make_lmk2d_for_flamefitting(all_camera_mouth_points_3d):
     all_camera_mouth_points_2d = lmk3d_2_2d(all_camera_mouth_points_3d)
     all_camera_mouth_points_2d = add_nose_lmk(all_camera_mouth_points_2d)
     all_camera_mouth_points_2d = lmk_sort(all_camera_mouth_points_2d)
+    # 16番目の特徴点を取得
+    reference_point = all_camera_mouth_points_2d[15]  # 16番目の点 (0-based index)
+    # 全体を平行移動させる
+    all_camera_mouth_points_2d -= reference_point
+    # y軸を反転させる
+    all_camera_mouth_points_2d[:, 1] = -all_camera_mouth_points_2d[:, 1]
+    # スケールを1/1000にする
+    all_camera_mouth_points_2d /= 1000.0
     return all_camera_mouth_points_2d
 
 if __name__ == '__main__':
@@ -133,15 +143,32 @@ if __name__ == '__main__':
 
     R_mouth2righteye = np.load("CameraCalibration/Parameters/R_mouth_right_eye_right.npy")
     T_mouth2righteye = np.load("CameraCalibration/Parameters/T_mouth_right_eye_right.npy")
-
-    for image_mouth_points_path, image_lefteye_points_path, image_righteye_points_path in zip(image_mouth_points_path_list, image_lefteye_points_path_list, image_righteye_points_path_list):
+    output_dir = 'output_landmark/estimated_3d'
+    model_path = 'DepthOnly_200000.pth'
+    for idx in range(0,25):
+        left_npy_filename_base = "test{}_0_annotated.npy".format(idx)
+        right_npy_filename_base = "test{}_1_annotated.npy".format(idx)
+        mouth_npy_filename_base = "test{}_annotated.npy".format(idx)
+        image_mouth_points_path = os.path.join(f'AnnotatedData/{participant_name}_Annotated/NPYs/mouth', mouth_npy_filename_base)
+        image_lefteye_points_path = os.path.join(f'AnnotatedData/{participant_name}_Annotated/NPYs/lefteye', left_npy_filename_base)
+        image_righteye_points_path = os.path.join(f'AnnotatedData/{participant_name}_Annotated/NPYs/righteye', right_npy_filename_base)
+        
+        if not(image_mouth_points_path in image_mouth_points_path_list and image_lefteye_points_path in image_lefteye_points_path_list and image_righteye_points_path in image_righteye_points_path_list):
+            continue
+        
         image_mouth_points = np.load(image_mouth_points_path)
         image_lefteye_points = np.load(image_lefteye_points_path)
         image_righteye_points = np.load(image_righteye_points_path)
 
         all_camera_mouth_points_3d = stereo_alignment(image_mouth_points, image_lefteye_points, image_righteye_points, mouth_mtx, lefteye_mtx, righteye_mtx, R_mouth2lefteye, T_mouth2lefteye, R_mouth2righteye, T_mouth2righteye)
         all_camera_mouth_points_2d = make_lmk2d_for_flamefitting(all_camera_mouth_points_3d)
-        plot_2d_3d_compare(all_camera_mouth_points_2d, all_camera_mouth_points_3d)
+        predicted_lmk_3d = lmk2d_2_3d(model_path, all_camera_mouth_points_2d)
+
+        # 最初の5文字を取り出してファイル名として使用
+        file_name = os.path.basename(image_mouth_points_path)[:6] + ".npy"
+        np.save(os.path.join(output_dir, file_name), predicted_lmk_3d)
+        print("Saved:", os.path.join(output_dir, file_name))
+
         
 
 """

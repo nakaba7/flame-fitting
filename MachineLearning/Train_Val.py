@@ -5,16 +5,15 @@ import numpy as np
 import os
 from torch.utils.data import Dataset, DataLoader
 from EarlyStopping import EarlyStopping
-from SimpleNet import DepthPredictionModel
 from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR
 from CNNModel import CNNPredictor
 import wandb
 """
-作成したネットワークで学習を行うスクリプト. flame-fittingディレクトリの下で実行する.
+作成したネットワークで学習を行うスクリプト. 
 ネットワークの候補はSimpleNet.py, CNNModel.pyの中から選択する.
 Usage:
-    $ python Train_Val.py
+    $ python MachineLearning/Train_Val.py
 
 """
 
@@ -83,7 +82,7 @@ def main():
     batch_size = 64
     
     wandb.init(
-        project="Simple_2d_3d_landmark",
+        project="CNN_zPrediction",
         config={
             "input_dim": input_dim,
             "hidden_dim": hidden_dim,
@@ -95,6 +94,7 @@ def main():
             "dataset_size": dataset_size
         }
     )
+    
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_dir = 'output_landmark/2d'
@@ -116,10 +116,9 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
 
-    for epoch in tqdm(range(epoch_num)):
+    for epoch in range(epoch_num):
         model.train()
         for inputs, targets in train_dataloader:
-            #print("train",inputs.shape, targets.shape)
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)

@@ -3,13 +3,14 @@ import numpy as np
 import os
 import argparse
 import re
+
 """
 手動で顔の特徴点検出を行うスクリプト. 左目, 右目, 口の順番で行う. 
 Usage:
-    python FaceAnnotation/manual_annotation.py -p PARTICIPANTNAME -r [False|True]
+    python FaceAnnotation/manual_annotation.py -p PARTICIPANTNAME (-r)
 Args:   
     -p: 参加者名を指定
-    -r: インデックスをリセットするかどうかを指定. デフォルトはFalse.
+    -r: インデックスをリセットするかどうかを指定. -rオプションをつけるとリセットされる.
 """
 
 def manual_annotation(img, output_img_path, output_npy_path, index, total, instructions):
@@ -72,10 +73,12 @@ def annotation_onefolder(participant_name, facepart, reset=False):
     img_count = 0
     i = 0
     if not reset and os.path.exists(last_index_file):
+        print(last_index_file)
         with open(last_index_file, 'r') as f:
             i = int(f.read().strip())
     previous_i = i
     instructions = 'Commands: r - Reset, b - Back, s - Save and Stop, q - Quit'
+    print(i)
     while i < len(facepart_image_list):
         img = facepart_image_list[i]
         input_img_path = os.path.join(input_dir_path, img)
@@ -99,6 +102,8 @@ def annotation_onefolder(participant_name, facepart, reset=False):
             img_count += 1
             i += 1
     if i != previous_i:
+        with open(last_index_file, 'w') as f:
+            f.write(str(i))
         print(f'{facepart} annotation finished')
     else:
         print(f'No images found in {facepart} folder')
@@ -108,9 +113,7 @@ def reset_indices(participant_name):
     parts = ["lefteye", "righteye", "mouth"]
     for part in parts:
         output_img_dir = f'AnnotatedData/{participant_name}_Annotated/Images/{part}'
-        if not os.path.exists(output_img_dir):
-            print(f'No index file found for {part}')
-            continue
+        os.makedirs(output_img_dir, exist_ok=True)
         last_index_file = os.path.join(output_img_dir, 'last_index.txt')
         with open(last_index_file, 'w') as f:
             f.write('0')
@@ -118,7 +121,8 @@ def reset_indices(participant_name):
 def main(args):
     participant_name = args.p
     reset = args.r
-    if reset :
+    print(reset)
+    if reset:
         reset_indices(participant_name)
         print("Indices reset.")
         
@@ -129,5 +133,5 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', type=str, help='participant name')
-    parser.add_argument('-r', default=False, type=bool, help='reset indices')
+    parser.add_argument('-r', action='store_true', help='reset indices')
     main(parser.parse_args())
