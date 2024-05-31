@@ -10,7 +10,7 @@ Usage:
     python FaceAnnotation/manual_annotation.py -p PARTICIPANTNAME (-r)
 Args:   
     -p: 参加者名を指定
-    -r: インデックスをリセットするかどうかを指定. -rオプションをつけるとリセットされる.
+    -r: インデックスをリセットするかどうかを指定. -rオプションをつけるとインデックスがリセットされ, 最初からアノテーションを行う.
 """
 
 def manual_annotation(img, output_img_path, output_npy_path, index, total, instructions):
@@ -78,7 +78,6 @@ def annotation_onefolder(participant_name, facepart, reset=False):
             i = int(f.read().strip())
     previous_i = i
     instructions = 'Commands: r - Reset, b - Back, s - Save and Stop, q - Quit'
-    print(i)
     while i < len(facepart_image_list):
         img = facepart_image_list[i]
         input_img_path = os.path.join(input_dir_path, img)
@@ -121,7 +120,6 @@ def reset_indices(participant_name):
 def main(args):
     participant_name = args.p
     reset = args.r
-    print(reset)
     if reset:
         reset_indices(participant_name)
         print("Indices reset.")
