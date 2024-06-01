@@ -10,3 +10,4 @@ CopyImages_via_samba.py
 MachineLearning/wandb/*
 FaceImages/*
 AnnotatedData/*
+*.zip
