@@ -159,9 +159,9 @@ def main(args):
     # shape regularizer (weight higher to regularize face shape more towards the mean)
     weights['shape'] = 1.0
     # expression regularizer (weight higher to regularize facial expression more towards the mean)
-    weights['expr']  = 1e-3
+    weights['expr']  = 5e-4
     # regularization of head rotation around the neck and jaw opening (weight higher for more regularization)
-    weights['pose']  = 1e-2
+    weights['pose']  = 5e-3
     
     # number of shape and expression parameters (we do not recommend using too many parameters for fitting to sparse keypoints)
     shape_num = 100

@@ -37,7 +37,7 @@ def lmk2d_2_3d(model_path, landmark_2d):
     return landmark_3d_np
 
 def main():
-    model_path = 'DepthOnly_200000.pth'
+    model_path = 'models/DepthOnly_200000.pth'
     input_dir = 'output_landmark/2d/test'
     output_dir = 'output_landmark/estimated_3d/test'
     target_dir = 'output_landmark/3d/test'  

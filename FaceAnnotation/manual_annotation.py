@@ -21,15 +21,15 @@ def manual_annotation(img, output_img_path, output_npy_path, index, total, instr
             cv2.circle(img, (x, y), 3, (0, 0, 255), -1)
             facial_landmarks.append((x, y))
             cv2.imshow('image', img)
+            print(f'Landmark {len(facial_landmarks)}: ({x}, {y})')
 
     img_original = img.copy()
 
     cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-
     while True:
         img_display = img.copy()
-        cv2.putText(img_display, f'Index: {index+1}/{total}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+        cv2.putText(img_display, f'Index: {index}/{total}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
         cv2.putText(img_display, instructions, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2, cv2.LINE_AA)
         cv2.imshow('image', img_display)
         cv2.setMouseCallback('image', click_event)
@@ -51,8 +51,8 @@ def manual_annotation(img, output_img_path, output_npy_path, index, total, instr
             break
     cv2.destroyAllWindows()
 
-    print("Selected Facial Landmarks:")
-    print(facial_landmarks)
+    #print("Selected Facial Landmarks:")
+    #print(facial_landmarks)
     np.save(output_npy_path, np.array(facial_landmarks))
     cv2.imwrite(output_img_path, img)
     print(f'Annotated image saved as {output_img_path}')
@@ -81,6 +81,7 @@ def annotation_onefolder(participant_name, facepart, reset=False):
     while i < len(facepart_image_list):
         img = facepart_image_list[i]
         input_img_path = os.path.join(input_dir_path, img)
+        print("=====================================")
         print(input_img_path)
         input_img = cv2.imread(input_img_path)
         result = manual_annotation(input_img, os.path.join(output_img_dir, f'{img[:-4]}_annotated.jpg'), os.path.join(output_npy_dir, f'{img[:-4]}_annotated.npy'), i, len(facepart_image_list), instructions)
