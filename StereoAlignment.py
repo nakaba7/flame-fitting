@@ -149,6 +149,8 @@ if __name__ == '__main__':
     output_3d_dir = 'output_landmark/estimated_3d'
     model_path = 'models/DepthOnly_200000.pth'
     for idx in range(200):
+        idx = str(idx)
+        idx = idx.zfill(5)
         left_npy_filename_base = "test{}_0_annotated.npy".format(idx)
         right_npy_filename_base = "test{}_1_annotated.npy".format(idx)
         mouth_npy_filename_base = "test{}_annotated.npy".format(idx)
@@ -176,8 +178,8 @@ if __name__ == '__main__':
         all_camera_mouth_points_2d = make_lmk2d_for_flamefitting(all_camera_mouth_points_3d)
         predicted_lmk_3d = lmk2d_2_3d(model_path, all_camera_mouth_points_2d)
 
-        # 最初の5文字を取り出してファイル名として使用
-        file_name = os.path.basename(image_mouth_points_path)[:6] + ".npy"
+        # testXXXXXをファイル名として使用
+        file_name = os.path.basename(image_mouth_points_path)[:9] + ".npy"
         np.save(os.path.join(output_aligned_3d_dir, file_name), all_camera_mouth_points_3d)
         print("Saved 3d aligned:", os.path.join(output_aligned_3d_dir, file_name))
         np.save(os.path.join(output_2d_dir, file_name), all_camera_mouth_points_2d)
