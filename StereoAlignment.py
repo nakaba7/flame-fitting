@@ -170,6 +170,7 @@ if __name__ == '__main__':
                 print(image_lefteye_points_path)
             if image_righteye_points.shape[0] != 11:
                 print(image_righteye_points_path)
+            print()
             continue
         all_camera_mouth_points_3d = stereo_alignment(image_mouth_points, image_lefteye_points, image_righteye_points, mouth_mtx, lefteye_mtx, righteye_mtx, R_mouth2lefteye, T_mouth2lefteye, R_mouth2righteye, T_mouth2righteye)
         all_camera_mouth_points_2d = make_lmk2d_for_flamefitting(all_camera_mouth_points_3d)

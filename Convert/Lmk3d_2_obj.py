@@ -15,7 +15,7 @@ from fitting.landmarks import load_embedding, landmark_error_3d
 from fitting.util import load_binary_pickle, write_simple_obj, safe_mkdir, get_unit_factor
 
 """
-指定したディレクトリ下の3次元ランドマークをFLAMEモデルにフィッティングし、objファイルとして保存するスクリプト
+3次元ランドマークをFLAMEモデルにフィッティングし、objファイルとして保存するスクリプト
 
 Usage:
     python Convert/lmk3d_2_obj.py -f [3Dランドマークディレクトリ] -o [出力ディレクトリ]
