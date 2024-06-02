@@ -19,7 +19,6 @@ Usage:
     python Convert/Lmk2d_2_3d.py
 """
 
-
 def lmk2d_2_3d(model_path, landmark_2d):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_dim = 2
