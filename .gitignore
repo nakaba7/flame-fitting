@@ -3,11 +3,14 @@
 *.png
 *.jpeg
 *.csv
-*.npy
+#*.npy
 *.obj
 wandb/*
 CopyImages_via_samba.py
 MachineLearning/wandb/*
 FaceImages/*
 AnnotatedData/*
+output_landmark/2d/*
+output_landmark/3d/*
 *.zip
+models/*
