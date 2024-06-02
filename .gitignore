@@ -9,7 +9,7 @@ wandb/*
 CopyImages_via_samba.py
 MachineLearning/wandb/*
 FaceImages/*
-AnnotatedData/*
+AnnotatedData/Images/*
 output_landmark/2d/*
 output_landmark/3d/*
 *.zip
