@@ -1,5 +1,11 @@
 import os
 import re
+"""
+指定ディレクトリ下のファイル名に含まれる数字を5桁の数字に変更するスクリプト.
+Usage:
+    python Filename2fivedigits.py
+"""
+
 
 # ディレクトリのパスを指定
 #directory_path = 'FaceImages/Nakabayashi/righteye'
