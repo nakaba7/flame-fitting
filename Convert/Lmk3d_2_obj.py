@@ -19,9 +19,11 @@ from fitting.util import load_binary_pickle, write_simple_obj, safe_mkdir, get_u
 
 Usage:
     python Convert/lmk3d_2_obj.py -f [3Dランドマークディレクトリ] -o [出力ディレクトリ]
+    python Convert/lmk3d_2_obj.py -i [入力ファイルパス] -o [出力ディレクトリ] 
 Args:
     -f: 3次元ランドマークを含むディレクトリ
     -o: 出力ディレクトリ
+    -i: 入力ファイル(指定した場合、そのファイルのみを処理する)
 """
 
 def fit_lmk3d( lmk_3d,                   # input landmark 3d
@@ -159,9 +161,9 @@ def main(args):
     # shape regularizer (weight higher to regularize face shape more towards the mean)
     weights['shape'] = 1.0
     # expression regularizer (weight higher to regularize facial expression more towards the mean)
-    weights['expr']  = 5e-4
+    weights['expr']  = 1e-3
     # regularization of head rotation around the neck and jaw opening (weight higher for more regularization)
-    weights['pose']  = 5e-3
+    weights['pose']  = 1e-2
     
     # number of shape and expression parameters (we do not recommend using too many parameters for fitting to sparse keypoints)
     shape_num = 100
@@ -175,6 +177,9 @@ def main(args):
     opt_options['maxiter'] = 2000
     sparse_solver = lambda A, x: sp.linalg.cg(A, x, maxiter=opt_options['maxiter'])[0]
     opt_options['sparse_solver'] = sparse_solver
+    if args.i:
+        run_fitting(args.i, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_dir)
+        return
     all_lmk = glob.glob(f'{lmk_dir}/*.npy')
     lmk_num = len(all_lmk)
     for i, lmk_path in enumerate(all_lmk):
@@ -185,5 +190,6 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', default='output_landmark/estimated_3d', type=str,  help='directory of the 3D landmarks.')
+    parser.add_argument('-i', type=str,  help='input file')
     parser.add_argument('-o', default='../Collect FLAME Landmark/Assets/Objects/FLAMEmodel', type=str,  help='output directory')
     main(parser.parse_args())

@@ -144,6 +144,7 @@ if __name__ == '__main__':
 
     R_mouth2righteye = np.load("CameraCalibration/Parameters/R_mouth_right_eye_right.npy")
     T_mouth2righteye = np.load("CameraCalibration/Parameters/T_mouth_right_eye_right.npy")
+    output_aligned_3d_dir = 'output_landmark/aligned_3d'
     output_2d_dir = 'output_landmark/estimated_2d'
     output_3d_dir = 'output_landmark/estimated_3d'
     model_path = 'models/DepthOnly_200000.pth'
@@ -176,6 +177,8 @@ if __name__ == '__main__':
 
         # 最初の5文字を取り出してファイル名として使用
         file_name = os.path.basename(image_mouth_points_path)[:6] + ".npy"
+        np.save(os.path.join(output_aligned_3d_dir, file_name), all_camera_mouth_points_3d)
+        print("Saved 3d aligned:", os.path.join(output_aligned_3d_dir, file_name))
         np.save(os.path.join(output_2d_dir, file_name), all_camera_mouth_points_2d)
         print("Saved 2d:", os.path.join(output_2d_dir, file_name))
         np.save(os.path.join(output_3d_dir, file_name), predicted_lmk_3d)
