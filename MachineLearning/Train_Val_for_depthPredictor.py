@@ -69,7 +69,6 @@ def weighted_mse_loss(input, target, weight=1):
 def main():
     # パラメータ設定
     input_dim = 2
-    hidden_dim = 1024
     output_dim = 1
     dataset_size = 200000
     #model_path = f'Simple_2d_2_3d_{dataset_size}.pth'
@@ -85,7 +84,6 @@ def main():
         project="CNN_zPrediction",
         config={
             "input_dim": input_dim,
-            "hidden_dim": hidden_dim,
             "output_dim": output_dim,
             "model_path": model_path,
             "epoch_num": epoch_num,

@@ -125,14 +125,23 @@ def fit_lmk3d( lmk_3d,                   # input landmark 3d
 
 # -----------------------------------------------------------------------------
 
-def run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_dir):
+def run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_obj_dir, output_param_dir, participant_name, overwrite_flag=False):
     print("load:", lmk_path)
     # write result
     filename = basename(lmk_path)[:-4]
-    # write result
-    output_path = join(output_dir, f'{filename}.obj' )
-    if os.path.exists(output_path):
-        print("already exists:", output_path)
+    output_expr_dir = join(output_param_dir, participant_name,'expr')
+    output_pose_dir = join(output_param_dir, participant_name,'pose')
+    
+    if not os.path.exists(output_expr_dir):
+        os.makedirs(output_expr_dir)
+    if not os.path.exists(output_pose_dir):
+        os.makedirs(output_pose_dir)
+
+    output_obj_path = join(output_obj_dir, f'{filename}.obj' )
+    output_expr_path = join(output_expr_dir, f'{filename}_expr.npy' )
+    output_pose_path = join(output_pose_dir, f'{filename}_pose.npy' )
+    if os.path.exists(output_obj_path) and not overwrite_flag:
+        print("already exists:", output_obj_path)
         print("------------------------------------------")
         return
     lmk_3d = np.load(lmk_path)
@@ -142,15 +151,28 @@ def run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num,
                                        lmk_face_idx=lmk_face_idx, lmk_b_coords=lmk_b_coords,  # landmark embedding
                                        weights=weights,                                       # weights for the objectives
                                        shape_num=shape_num, expr_num=expr_num, opt_options=opt_options ) # options
-    
-    print("write result to:", output_path)
+    #print(parms['betas'][300:300+min(100,expr_num)])
+    #print(len(parms['pose'])) #15
+    #print(len(parms['betas'])) #400
+    expr_param_np = np.array(parms['betas'][300:300+min(100,expr_num)])
+    pose_param_np = np.array(parms['pose'])
+    #print(expr_param_np)
+    #print(pose_param_np)
+    #print("write Obj to:", output_obj_path)
+    np.save(output_expr_path, expr_param_np)
+    np.save(output_pose_path, pose_param_np)
+    print("write Expr to:", output_expr_path)
+    print("write Pose to:", output_pose_path)
     print("------------------------------------------")
-    write_simple_obj( mesh_v=mesh_v, mesh_f=mesh_f, filepath=output_path, verbose=False )
+    #write_simple_obj( mesh_v=mesh_v, mesh_f=mesh_f, filepath=output_obj_path, verbose=False )
 
 def main(args):
     lmk_dir = args.f
-    output_dir = args.o
-    safe_mkdir(output_dir)
+    output_obj_dir = args.o
+    overwrite_flag = args.r
+    output_param_dir = args.p
+    participant_name = args.n
+    safe_mkdir(output_obj_dir)
 
     # model
     model_path = './models/generic_model.pkl' # change to 'female_model.pkl' or 'male_model.pkl', if gender is known
@@ -184,19 +206,21 @@ def main(args):
     sparse_solver = lambda A, x: sp.linalg.cg(A, x, maxiter=opt_options['maxiter'])[0]
     opt_options['sparse_solver'] = sparse_solver
     if args.i:
-        run_fitting(args.i, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_dir)
+        run_fitting(args.i, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_obj_dir, output_param_dir, participant_name, overwrite_flag)
         return
     all_lmk = glob.glob(f'{lmk_dir}/*.npy')
     lmk_num = len(all_lmk)
     for i, lmk_path in enumerate(all_lmk):
         print(f"{i+1}/{lmk_num}")
-        run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_dir)
+        run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_obj_dir, output_param_dir, participant_name, overwrite_flag)
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', default='output_landmark/estimated_3d', type=str,  help='directory of the 3D landmarks.')
     parser.add_argument('-i', type=str,  help='input file path')
-    parser.add_argument('-o', default='../Collect FLAME Landmark/Assets/Objects/FLAMEmodel', type=str,  help='output directory path')
+    parser.add_argument('-o', default='../Collect FLAME Landmark/Assets/Objects/FLAMEmodel', type=str,  help='output obj directory path')
+    parser.add_argument('-p', default='output_params', type=str,  help='output params directory path')
     parser.add_argument('-r', action='store_true', help='overwrite existing files or not.')
+    parser.add_argument('-n', type=str, help='name of a participant.')
     main(parser.parse_args())
