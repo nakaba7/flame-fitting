@@ -101,7 +101,7 @@ def main():
         valid_indices = get_valid_indices(expr_dir, pose_dir)
         filter_csv_by_indices(input_csv, output_csv_for_traindata, valid_indices)
 
-    inputs_csv = pd.read_csv(output_csv_for_traindata, header=None)
+    inputs_csv = pd.read_csv(output_csv_for_traindata, header=None).values  # pandas DataFrameをnumpy arrayに変換
     targets_npy = np.load(target_npy_filepath)
 
     dataset = CustomDataset(inputs_csv, targets_npy)
@@ -127,7 +127,10 @@ def main():
         model.train()
         for inputs, targets in train_dataloader:
             inputs, targets = inputs.to(device), targets.to(device)
-            inputs = inputs.unsqueeze(1)  # 1D CNNのためにチャンネル次元を追加
+            inputs = inputs.float()  # データをfloat型に変換
+            print(inputs.shape)
+            #inputs = inputs.unsqueeze(1)  # バッチ次元とチャネル次元を追加
+            #print(inputs.shape)
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, targets)
@@ -142,7 +145,11 @@ def main():
             val_loss = 0
             for inputs, targets in val_dataloader:
                 inputs, targets = inputs.to(device), targets.to(device)
-                inputs = inputs.unsqueeze(1)  # 1D CNNのためにチャンネル次元を追加
+                inputs = inputs.float()  # データをfloat型に変換
+                if inputs.dim() == 2:  # inputsが2次元の場合にのみ次元変更を行う
+                    inputs = inputs.unsqueeze(1)  # バッチ次元とチャネル次元を追加
+                elif inputs.dim() == 3:
+                    inputs = inputs.transpose(1, 2)  # 3次元の場合、チャネル次元を変更
                 outputs = model(inputs)
                 val_loss += criterion(outputs, targets).item()
             val_loss /= len(val_dataloader)
