@@ -148,7 +148,10 @@ if __name__ == '__main__':
     output_2d_dir = 'output_landmark/estimated_2d'
     output_3d_dir = 'output_landmark/estimated_3d'
     model_path = 'models/DepthOnly_200000.pth'
-    for idx in range(200):
+
+    min_length = min(len(image_mouth_points_path_list), len(image_lefteye_points_path_list), len(image_righteye_points_path_list))
+
+    for idx in range(min_length):
         idx = str(idx)
         idx = idx.zfill(5)
         left_npy_filename_base = "test{}_0_annotated.npy".format(idx)
@@ -159,6 +162,12 @@ if __name__ == '__main__':
         image_righteye_points_path = os.path.join(f'AnnotatedData/{participant_name}_Annotated/NPYs/righteye', right_npy_filename_base)
         
         if not(image_mouth_points_path in image_mouth_points_path_list and image_lefteye_points_path in image_lefteye_points_path_list and image_righteye_points_path in image_righteye_points_path_list):
+            if not image_mouth_points_path in image_mouth_points_path_list:
+                print(f"Invalid mouth path: {image_mouth_points_path}")
+            if not image_lefteye_points_path in image_lefteye_points_path_list:
+                print(f"Invalid lefteye path: {image_lefteye_points_path}")
+            if not image_righteye_points_path in image_righteye_points_path_list:
+                print(f"Invalid righteye path: {image_righteye_points_path}")
             continue
         
         image_mouth_points = np.load(image_mouth_points_path)

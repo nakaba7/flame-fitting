@@ -18,12 +18,13 @@ from fitting.util import load_binary_pickle, write_simple_obj, safe_mkdir, get_u
 3次元ランドマークをFLAMEモデルにフィッティングし、objファイルとして保存するスクリプト
 
 Usage:
-    python Convert/lmk3d_2_obj.py -f [3Dランドマークディレクトリ] -o [出力ディレクトリ]
-    python Convert/lmk3d_2_obj.py -i [入力ファイルパス] -o [出力ディレクトリ] 
+    python Convert/lmk3d_2_obj.py -f [3Dランドマークディレクトリ] -o [出力ディレクトリ] (-r)
+    python Convert/lmk3d_2_obj.py -i [入力ファイルパス] -o [出力ディレクトリ] (-r)
 Args:
     -f: 3次元ランドマークを含むディレクトリ
     -o: 出力ディレクトリ
     -i: 入力ファイル(指定した場合、そのファイルのみを処理する)
+    -r: 既存のファイルを上書きするかどうか
 """
 
 def fit_lmk3d( lmk_3d,                   # input landmark 3d
@@ -126,6 +127,14 @@ def fit_lmk3d( lmk_3d,                   # input landmark 3d
 
 def run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_dir):
     print("load:", lmk_path)
+    # write result
+    filename = basename(lmk_path)[:-4]
+    # write result
+    output_path = join(output_dir, f'{filename}.obj' )
+    if os.path.exists(output_path):
+        print("already exists:", output_path)
+        print("------------------------------------------")
+        return
     lmk_3d = np.load(lmk_path)
     # run fitting
     mesh_v, mesh_f, parms = fit_lmk3d( lmk_3d=lmk_3d,                                         # input landmark 3d
@@ -133,10 +142,7 @@ def run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num,
                                        lmk_face_idx=lmk_face_idx, lmk_b_coords=lmk_b_coords,  # landmark embedding
                                        weights=weights,                                       # weights for the objectives
                                        shape_num=shape_num, expr_num=expr_num, opt_options=opt_options ) # options
-    # write result
-    filename = basename(lmk_path)[:-4]
-    # write result
-    output_path = join(output_dir, f'{filename}.obj' )
+    
     print("write result to:", output_path)
     print("------------------------------------------")
     write_simple_obj( mesh_v=mesh_v, mesh_f=mesh_f, filepath=output_path, verbose=False )
@@ -190,6 +196,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', default='output_landmark/estimated_3d', type=str,  help='directory of the 3D landmarks.')
-    parser.add_argument('-i', type=str,  help='input file')
-    parser.add_argument('-o', default='../Collect FLAME Landmark/Assets/Objects/FLAMEmodel', type=str,  help='output directory')
+    parser.add_argument('-i', type=str,  help='input file path')
+    parser.add_argument('-o', default='../Collect FLAME Landmark/Assets/Objects/FLAMEmodel', type=str,  help='output directory path')
+    parser.add_argument('-r', action='store_true', help='overwrite existing files or not.')
     main(parser.parse_args())
