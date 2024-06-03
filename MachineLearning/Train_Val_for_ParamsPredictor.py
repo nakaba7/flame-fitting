@@ -69,7 +69,7 @@ def filter_csv_by_indices(input_csv, output_csv, valid_indices):
 
 def main():
     # パラメータ設定
-    input_dim = 16
+    input_channel = 1
     output_dim = 65
     num_epochs = 10000
     learning_rate = 1e-5
@@ -78,7 +78,7 @@ def main():
     wandb.init(
         project="Params_Prediction",
         config={
-            "input_dim": input_dim,
+            "input_channel": input_channel,
             "output_dim": output_dim,
             "learning_rate": learning_rate,
             "batch_size": batch_size
@@ -116,7 +116,7 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-    model = ParamPredictorModel(input_dim, output_dim).to(device)
+    model = ParamPredictorModel(input_channel, output_dim).to(device)
     earlystopping = EarlyStopping(patience=20, verbose=True, path='ParamsPredictor.pth')
 
     criterion = nn.MSELoss()
