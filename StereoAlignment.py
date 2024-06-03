@@ -190,12 +190,12 @@ if __name__ == '__main__':
         # testXXXXXをファイル名として使用
         file_name = os.path.basename(image_mouth_points_path)[:9] + ".npy"
         np.save(os.path.join(output_aligned_3d_dir, file_name), all_camera_mouth_points_3d)
-        print("Saved 3d aligned:", os.path.join(output_aligned_3d_dir, file_name))
+        #print("Saved 3d aligned:", os.path.join(output_aligned_3d_dir, file_name))
         np.save(os.path.join(output_2d_dir, file_name), all_camera_mouth_points_2d)
-        print("Saved 2d:", os.path.join(output_2d_dir, file_name))
+        #print("Saved 2d:", os.path.join(output_2d_dir, file_name))
         np.save(os.path.join(output_3d_dir, file_name), predicted_lmk_3d)
-        print("Saved 3d:", os.path.join(output_3d_dir, file_name))
-        print()
+        #print("Saved 3d:", os.path.join(output_3d_dir, file_name))
+        #print()
 
         
 
