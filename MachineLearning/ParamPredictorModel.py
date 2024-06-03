@@ -19,9 +19,7 @@ class ParamPredictorModel(nn.Module):
         self.fc2 = nn.Linear(128, num_params)
 
     def forward(self, x):
-        print(x.shape)
         x = self.conv1(x)
-        print(x.shape)
         x = self.bn1(x)
         x = self.relu1(x)
         x = self.pool1(x)

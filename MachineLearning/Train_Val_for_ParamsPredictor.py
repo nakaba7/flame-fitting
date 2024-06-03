@@ -10,7 +10,13 @@ from EarlyStopping import EarlyStopping
 from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR
 from ParamPredictorModel import ParamPredictorModel
-#import wandb
+import wandb
+"""
+フォトリフレクタのセンサ値からパラメータを予測するモデルを学習するスクリプト
+Usage:
+    python MachineLearning/Train_Val_for_ParamsPredictor.py
+
+"""
 
 class CustomDataset(Dataset):
     def __init__(self, inputs, targets):
@@ -71,10 +77,10 @@ def main():
     # パラメータ設定
     input_channel = 1
     output_dim = 65
-    num_epochs = 10000
+    num_epochs = 100000000
     learning_rate = 1e-5
     batch_size = 64
-    """
+    
     wandb.init(
         project="Params_Prediction",
         config={
@@ -84,8 +90,7 @@ def main():
             "batch_size": batch_size
         }
     )
-    """
-
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     input_csv = 'sensor_values/Nakabayashi/sensor_data_test.csv'
@@ -117,28 +122,30 @@ def main():
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     model = ParamPredictorModel(input_channel, output_dim).to(device)
-    earlystopping = EarlyStopping(patience=20, verbose=True, path='ParamsPredictor.pth')
+    earlystopping = EarlyStopping(patience=1000, verbose=True, path='models/ParamsPredictor.pth')
 
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size=8000, gamma=0.1)
 
     for epoch in range(num_epochs):
         model.train()
         for inputs, targets in train_dataloader:
             inputs, targets = inputs.to(device), targets.to(device)
-            inputs = inputs.float()  # データをfloat型に変換
-            print(inputs.shape)
-            #inputs = inputs.unsqueeze(1)  # バッチ次元とチャネル次元を追加
-            #print(inputs.shape)
+            inputs = inputs.float() 
+            inputs = inputs.unsqueeze(1)  
+            
             optimizer.zero_grad()
             outputs = model(inputs)
+            outputs = outputs.float()
+            targets = targets.float()
+            
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
 
         print(f'Epoch {epoch+1}, Loss: {loss.item()}')
-        #wandb.log({"Training Loss": loss.item()})
+        wandb.log({"Training Loss": loss.item()})
 
         model.eval()
         with torch.no_grad():
@@ -151,6 +158,8 @@ def main():
                 elif inputs.dim() == 3:
                     inputs = inputs.transpose(1, 2)  # 3次元の場合、チャネル次元を変更
                 outputs = model(inputs)
+                outputs = outputs.float()
+                targets = targets.float()
                 val_loss += criterion(outputs, targets).item()
             val_loss /= len(val_dataloader)
             earlystopping(val_loss, model)
@@ -160,8 +169,9 @@ def main():
 
         print(f'Epoch {epoch+1}, Validation Loss: {val_loss}, lr: {scheduler.get_last_lr()}')
         print("====================================")
-        #wandb.log({"Validation Loss": val_loss})
+        wandb.log({"Validation Loss": val_loss})
         scheduler.step()
 
 if __name__ == '__main__':
     main()
+
