@@ -18,7 +18,7 @@ def manual_annotation(img, output_img_path, output_npy_path, index, total, instr
 
     def click_event(event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
-            cv2.circle(img, (x, y), 3, (0, 0, 255), -1)
+            cv2.circle(img, (x, y), 15, (0, 0, 255), -1)
             facial_landmarks.append((x, y))
             cv2.imshow('image', img)
             print(f'Landmark {len(facial_landmarks)}: ({x}, {y})')

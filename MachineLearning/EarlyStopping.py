@@ -29,8 +29,8 @@ class EarlyStopping:
             self.checkpoint(val_loss, model)  #記録後にモデルを保存してスコア表示する
         elif score < self.best_score:  # ベストスコアを更新できなかった場合
             self.counter += 1   #ストップカウンタを+1
-            if self.verbose:  #表示を有効にした場合は経過を表示
-                print(f'EarlyStopping counter: {self.counter} out of {self.patience}')  #現在のカウンタを表示する 
+            #if self.verbose:  #表示を有効にした場合は経過を表示
+                #print(f'EarlyStopping counter: {self.counter} out of {self.patience}')  #現在のカウンタを表示する 
             if self.counter >= self.patience:  #設定カウントを上回ったらストップフラグをTrueに変更
                 self.early_stop = True
         else:  #ベストスコアを更新した場合
@@ -40,7 +40,7 @@ class EarlyStopping:
 
     def checkpoint(self, val_loss, model):
         '''ベストスコア更新時に実行されるチェックポイント関数'''
-        if self.verbose:  #表示を有効にした場合は、前回のベストスコアからどれだけ更新したか？を表示
-            print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+        #if self.verbose:  #表示を有効にした場合は、前回のベストスコアからどれだけ更新したか？を表示
+            #print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
         torch.save(model.state_dict(), self.path)  #ベストモデルを指定したpathに保存
         self.val_loss_min = val_loss  #その時のlossを記録する

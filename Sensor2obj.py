@@ -72,7 +72,7 @@ def main():
                 filename_count+=1
             
         np.save(output_npy_path, prediction)
-        #print(f"Prediction for row {i} saved to {output_npy_path}")
+        print(f"Prediction for row {filename_count} saved to {output_npy_path}")
         filename_count+=1
 
 if __name__ == '__main__':

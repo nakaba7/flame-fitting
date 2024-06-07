@@ -9,7 +9,7 @@ def plot_2d(landmarks_2d, index=False):
     """
     # プロット
     plt.figure(figsize=(10, 10))
-    plt.scatter(landmarks_2d[:, 0], landmarks_2d[:, 1], s=20, c='r')
+    plt.scatter(landmarks_2d[:, 0], landmarks_2d[:, 1], s=40, c='r')
 
     if index:
         for idx, (x, y) in enumerate(landmarks_2d):
@@ -19,7 +19,7 @@ def plot_2d(landmarks_2d, index=False):
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.title('2D Feature Points with Index (Image Coordinates)')
-    plt.gca().invert_yaxis()  # y軸を反転
+    #plt.gca().invert_yaxis()  # y軸を反転
     plt.grid(True)
     plt.show()
 

@@ -1,35 +1,110 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
 import numpy as np
-from os.path import join
-from smpl_webuser.serialization import load_model
-from fitting.util import write_simple_obj, safe_mkdir
-import glob
 import os
+import pandas as pd
+import glob
+from torch.utils.data import Dataset, DataLoader
 
-def get_obj_from_params(ex):
-    # Load FLAME model (here we load the generic model)
-    # Make sure path is correct
-    model_path = './models/generic_model.pkl'
-    model = load_model(model_path)           # the loaded model object is a 'chumpy' object, check
+from tqdm import tqdm
+from torch.optim.lr_scheduler import StepLR
+
+
+"""
+フォトリフレクタのセンサ値からパラメータを予測するモデルを学習するスクリプト
+Usage:
+    python MachineLearning/Train_Val_for_ParamsPredictor.py
+
+"""
+
+class CustomDataset(Dataset):
+    def __init__(self, inputs, targets):
+        self.inputs = inputs
+        self.targets = targets
+
+    def __len__(self):
+        return len(self.inputs)
+
+    def __getitem__(self, idx):
+        return self.inputs[idx], self.targets[idx]
+
+def combine_expr_pose_npy_files(expr_dir, pose_dir, output_file):
+    expr_files = sorted([f for f in os.listdir(expr_dir) if f.endswith('_expr.npy')])
+    pose_files = sorted([f for f in os.listdir(pose_dir) if f.endswith('_pose.npy')])
+    
+    combined_data = []
+
+    for expr_file, pose_file in tqdm(zip(expr_files, pose_files), desc="Combining expr and pose files", total=len(expr_files)):
+        expr_path = os.path.join(expr_dir, expr_file)
+        pose_path = os.path.join(pose_dir, pose_file)
+        
+        expr_data = np.load(expr_path)
+        pose_data = np.load(pose_path)
+        
+        if expr_data.shape[0] != 50 or pose_data.shape[0] != 15:
+            print(f"Skipping {expr_file} and {pose_file} due to mismatched shapes.")
+            continue
+        
+        combined = np.concatenate((expr_data, pose_data))
+        combined_data.append(combined)
+    
+    combined_data = np.array(combined_data)
+    np.save(output_file, combined_data)
+    print(f"Combined data saved to {output_file}")
+
+def get_valid_indices(expr_dir, pose_dir):
+    expr_files = sorted([f for f in os.listdir(expr_dir) if f.startswith('test') and f.endswith('_expr.npy')])
+    pose_files = sorted([f for f in os.listdir(pose_dir) if f.startswith('test') and f.endswith('_pose.npy')])
+    valid_indices = set(int(f[4:9]) for f in expr_files) & set(int(f[4:9]) for f in pose_files)
+    return sorted(valid_indices)
+
+def filter_csv_by_indices(input_csv, output_csv, valid_indices):
+    # CSVファイルを読み込む
+    csv_data = pd.read_csv(input_csv, header=None)
+    csv_data = csv_data.values
+    new_csv_data = []
+    for i in range(len(csv_data)):
+        if i in valid_indices:
+            new_csv_data.append(csv_data[i])
+        else:
+            print(f"Skipping index {i}")
+    print(f"Filtered data size: {len(new_csv_data)}")
+    np.savetxt(output_csv, new_csv_data, delimiter=',', fmt='%s')
+    print(f"Filtered data saved to {output_csv}")
+
+def main():
+    # パラメータ設定
+    input_channel = 1
+    output_dim = 65
+    num_epochs = 100000000
+    learning_rate = 1e-5
+    batch_size = 64
+    
+    
+    input_csv = 'sensor_values/Nakabayashi/sensor_data_test.csv'
+    output_csv_for_traindata = 'sensor_values/Nakabayashi/sensor_data_test_filtered.csv'
+    param_dir_list = glob.glob("output_params/Nakabayashi/expr/*.npy")
+    param_file_num = len(param_dir_list)
+    target_npy_filepath = f"output_params/Nakabayashi/target_params_{param_file_num}.npy"
+    expr_dir = 'output_params/Nakabayashi/expr'
+    pose_dir = 'output_params/Nakabayashi/pose'
+    if not os.path.exists(target_npy_filepath):
+        output_file = target_npy_filepath
+        combine_expr_pose_npy_files(expr_dir, pose_dir, output_file)
+        valid_indices = get_valid_indices(expr_dir, pose_dir)
+        filter_csv_by_indices(input_csv, output_csv_for_traindata, valid_indices)
+    valid_indices = np.array(get_valid_indices(expr_dir, pose_dir))
+    print(valid_indices)
+    print(valid_indices.shape)
+    print(valid_indices[299])
+    num_data = 300
+    inputs_csv = pd.read_csv(output_csv_for_traindata, header=None, nrows=300).values
+    targets_npy = np.load(target_npy_filepath)
+    targets_npy = targets_npy[:num_data]
+    print(inputs_csv.shape, targets_npy.shape)
+    
 
 if __name__ == '__main__':
-    model_path = './models/generic_model.pkl'
-    model = load_model(model_path)           
-    print("loaded model from:", model_path)
-    outmesh_dir = "../Collect FLAME Landmark/Assets/Objects/Estimated"
-    if not os.path.exists(outmesh_dir):
-        os.makedirs(outmesh_dir)
-    
-    #pose_param_list = glob.glob("output_params/Nakabayashi/pose/*.npy")
-    #expr_param_list = glob.glob("output_params/Nakabayashi/expr/*.npy")
-    estimated_param_list = glob.glob("output_params/estimated/*.npy")
-    for i in range(len(estimated_param_list)):
-        param_npy = np.load(estimated_param_list[i])
-        param_npy = param_npy.squeeze()
-        #print(param_npy.shape)
-        #print(f"loaded {estimated_param_list[i]}")
-        model.pose[:] = param_npy[50:]
-        model.betas[300:350] = param_npy[:50]
-        basename = estimated_param_list[i].split("/")[-1].split(".")[0]
-        outmesh_path = join( outmesh_dir, f'{basename}_from_params.obj')
-        write_simple_obj( mesh_v=model.r, mesh_f=model.f, filepath=outmesh_path )
-        print('output mesh saved to: ', outmesh_path)
+    main()
+

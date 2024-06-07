@@ -13,7 +13,7 @@ For comments or questions, please email us at flame@tue.mpg.de
 import numpy as np
 import chumpy as ch
 from os.path import join, basename
-
+import time
 from smpl_webuser.serialization import load_model
 from fitting.landmarks import load_embedding, landmark_error_3d
 from fitting.util import load_binary_pickle, write_simple_obj, safe_mkdir, get_unit_factor
@@ -60,12 +60,16 @@ def fit_lmk3d( lmk_3d,                      # input landmark 3d
 
     # objectives
     # lmk
+    start_time = time.perf_counter()
     lmk_err = landmark_error_3d( mesh_verts=model, 
                                  mesh_faces=model.f, 
                                  lmk_3d=lmk_3d, 
                                  lmk_face_idx=lmk_face_idx, 
                                  lmk_b_coords=lmk_b_coords, 
                                  weight=weights['lmk'] )
+    
+    exec_time = time.perf_counter() - start_time
+    print("fit_lmk3d(): landmark error setup in %f sec" % exec_time)
     # regularizer
     shape_err = weights['shape'] * model.betas[shape_idx] 
     expr_err  = weights['expr']  * model.betas[expr_idx] 
@@ -91,26 +95,25 @@ def fit_lmk3d( lmk_3d,                      # input landmark 3d
         
     # optimize
     # step 1: rigid alignment
-    from time import time
-    timer_start = time()
+    timer_start = time.time()
     print("\nstep 1: start rigid fitting...")
     ch.minimize( fun      = lmk_err,
                  x0       = [ model.trans, model.pose[0:3] ],
                  method   = 'dogleg',
                  callback = on_step,
                  options  = opt_options )
-    timer_end = time()
+    timer_end = time.time()
     print("step 1: fitting done, in %f sec\n" % ( timer_end - timer_start ))
 
     # step 2: non-rigid alignment
-    timer_start = time()
+    timer_start = time.time()
     print("step 2: start non-rigid fitting...")    
     ch.minimize( fun      = objectives,
                  x0       = free_variables,
                  method   = 'dogleg',
                  callback = on_step,
                  options  = opt_options )
-    timer_end = time()
+    timer_end = time.time()
     print("step 2: fitting done, in %f sec\n" % ( timer_end - timer_start ))
 
     # return results

@@ -106,8 +106,12 @@ def main():
         valid_indices = get_valid_indices(expr_dir, pose_dir)
         filter_csv_by_indices(input_csv, output_csv_for_traindata, valid_indices)
 
-    inputs_csv = pd.read_csv(output_csv_for_traindata, header=None).values  # pandas DataFrameをnumpy arrayに変換
+    num_data = 300
+    inputs_csv = pd.read_csv(output_csv_for_traindata, header=None, nrows=300).values  # pandas DataFrameをnumpy arrayに変換
     targets_npy = np.load(target_npy_filepath)
+    targets_npy = targets_npy[:num_data]
+    print(inputs_csv.shape, targets_npy.shape)
+    
 
     dataset = CustomDataset(inputs_csv, targets_npy)
     print("dataset size:", len(dataset))
@@ -128,7 +132,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = StepLR(optimizer, step_size=8000, gamma=0.1)
 
-    for epoch in range(num_epochs):
+    for epoch in tqdm(range(num_epochs)):
         model.train()
         for inputs, targets in train_dataloader:
             inputs, targets = inputs.to(device), targets.to(device)
@@ -144,7 +148,7 @@ def main():
             loss.backward()
             optimizer.step()
 
-        print(f'Epoch {epoch+1}, Loss: {loss.item()}')
+        #print(f'Epoch {epoch+1}, Loss: {loss.item()}')
         wandb.log({"Training Loss": loss.item()})
 
         model.eval()
@@ -167,8 +171,8 @@ def main():
                 print("Early Stopping!")
                 break
 
-        print(f'Epoch {epoch+1}, Validation Loss: {val_loss}, lr: {scheduler.get_last_lr()}')
-        print("====================================")
+        #print(f'Epoch {epoch+1}, Validation Loss: {val_loss}, lr: {scheduler.get_last_lr()}')
+        #print("====================================")
         wandb.log({"Validation Loss": val_loss})
         scheduler.step()
 

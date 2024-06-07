@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Convert.Coordinate_convertor import image2camera_coordinates
 from Convert.Lmk3d_2_2d import lmk3d_2_2d
-from Lmk_plot import plot_2d, plot_2d_3d_compare
-import glob
 from Convert.Lmk2d_2_3d import lmk2d_2_3d
+from Lmk_plot import plot_2d, plot_2d_3d_compare, plot_3d
+import glob
 import os
 """
 口, 左目, 右目の2次元ランドマークを3次元ランドマークに変換し, 口のカメラ座標系に統一するスクリプト.
@@ -160,7 +160,7 @@ if __name__ == '__main__':
         image_mouth_points_path = os.path.join(f'AnnotatedData/{participant_name}_Annotated/NPYs/mouth', mouth_npy_filename_base)
         image_lefteye_points_path = os.path.join(f'AnnotatedData/{participant_name}_Annotated/NPYs/lefteye', left_npy_filename_base)
         image_righteye_points_path = os.path.join(f'AnnotatedData/{participant_name}_Annotated/NPYs/righteye', right_npy_filename_base)
-        
+        print("Loaded:", image_mouth_points_path, image_lefteye_points_path, image_righteye_points_path)
         if not(image_mouth_points_path in image_mouth_points_path_list and image_lefteye_points_path in image_lefteye_points_path_list and image_righteye_points_path in image_righteye_points_path_list):
             if not image_mouth_points_path in image_mouth_points_path_list:
                 print(f"Invalid mouth path: {image_mouth_points_path}")
@@ -184,16 +184,19 @@ if __name__ == '__main__':
             print()
             continue
         all_camera_mouth_points_3d = stereo_alignment(image_mouth_points, image_lefteye_points, image_righteye_points, mouth_mtx, lefteye_mtx, righteye_mtx, R_mouth2lefteye, T_mouth2lefteye, R_mouth2righteye, T_mouth2righteye)
+        plot_3d(all_camera_mouth_points_3d, True)
         all_camera_mouth_points_2d = make_lmk2d_for_flamefitting(all_camera_mouth_points_3d)
+        plot_2d(all_camera_mouth_points_2d, True)
         predicted_lmk_3d = lmk2d_2_3d(model_path, all_camera_mouth_points_2d)
+        plot_3d(predicted_lmk_3d, True)
 
         # testXXXXXをファイル名として使用
-        file_name = os.path.basename(image_mouth_points_path)[:9] + ".npy"
-        np.save(os.path.join(output_aligned_3d_dir, file_name), all_camera_mouth_points_3d)
+        #file_name = os.path.basename(image_mouth_points_path)[:9] + ".npy"
+        #np.save(os.path.join(output_aligned_3d_dir, file_name), all_camera_mouth_points_3d)
         #print("Saved 3d aligned:", os.path.join(output_aligned_3d_dir, file_name))
-        np.save(os.path.join(output_2d_dir, file_name), all_camera_mouth_points_2d)
+        #np.save(os.path.join(output_2d_dir, file_name), all_camera_mouth_points_2d)
         #print("Saved 2d:", os.path.join(output_2d_dir, file_name))
-        np.save(os.path.join(output_3d_dir, file_name), predicted_lmk_3d)
+        #np.save(os.path.join(output_3d_dir, file_name), predicted_lmk_3d)
         #print("Saved 3d:", os.path.join(output_3d_dir, file_name))
         #print()
 

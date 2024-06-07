@@ -5,6 +5,7 @@ import argparse
 import scipy.sparse as sp
 import glob
 import sys
+import time
 import os
 # 親ディレクトリのパスを取得
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -26,7 +27,7 @@ Args:
     -i: 入力ファイル(指定した場合、そのファイルのみを処理する)
     -r: 既存のファイルを上書きするかどうか
 """
-
+time_list = []
 def fit_lmk3d( lmk_3d,                   # input landmark 3d
             model,                       # model
             lmk_face_idx, lmk_b_coords,  # landmark embedding
@@ -94,11 +95,10 @@ def fit_lmk3d( lmk_3d,                   # input landmark 3d
     # on_step callback
     def on_step(_):
         pass
-        
+    
     # optimize
     # step 1: rigid alignment
-    from time import time
-    #timer_start = time()
+    timer_start = time.time()
     #print("\nstep 1: start rigid fitting...")
     ch.minimize( fun      = lmk_err,
                  x0       = [ model.trans, model.pose[0:3] ],
@@ -116,9 +116,9 @@ def fit_lmk3d( lmk_3d,                   # input landmark 3d
                  method   = 'dogleg',
                  callback = on_step,
                  options  = opt_options )
-    #timer_end = time()
-    #print("step 2: fitting done, in %f sec\n" % ( timer_end - timer_start ))
-
+    timer_end = time.time()
+    print("fitting done, in %f sec\n" % ( timer_end - timer_start ))
+    time_list.append(timer_end - timer_start)
     # return results
     parms = { 'trans': model.trans.r, 'pose': model.pose.r, 'betas': model.betas.r }
     return model.r, model.f, parms
@@ -180,7 +180,7 @@ def main(args):
 
     # landmark embedding
     lmk_emb_path = './models/flame_static_embedding.pkl' 
-    lmk_face_idx, lmk_b_coords = load_embedding(lmk_emb_path)   
+    lmk_face_idx, lmk_b_coords = load_embedding(lmk_emb_path)
 
     # weights
     weights = {}
@@ -213,6 +213,8 @@ def main(args):
     for i, lmk_path in enumerate(all_lmk):
         print(f"{i+1}/{lmk_num}")
         run_fitting(lmk_path, model, lmk_face_idx, lmk_b_coords, weights, shape_num, expr_num, opt_options, output_obj_dir, output_param_dir, participant_name, overwrite_flag)
+        #print(time_list)
+    print("average time:", sum(time_list)/len(time_list))
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
