@@ -33,39 +33,26 @@ if __name__ == '__main__':
     print("shape (identity) coefficient shape =", model.betas[0:300].shape) # valid shape component range in "betas": 0-299
     print("expression coefficient shape       =", model.betas[300:].shape)  # valid expression component range in "betas": 300-399
     print("pose coefficient shape             =", model.pose.shape)
-    """
+    
     print("\nFLAME model components:")
     print("shape (identity) component shape =", model.shapedirs[:,:,0:300].shape)
     print("expression component shape       =", model.shapedirs[:,:,300:].shape)
     print("pose corrective blendshape shape =", model.posedirs.shape)
     print("\n")
-    """
-    outmesh_dir = './output_obj/Nakabayashi'
-    safe_mkdir( outmesh_dir )
-    pose_param_list = glob.glob("output_params/Nakabayashi/pose/*.npy")
-    expr_param_list = glob.glob("output_params/Nakabayashi/expr/*.npy")
-    loop_num = min(len(pose_param_list), len(expr_param_list))
-    for i in range(loop_num):
-        model.pose[:] = np.load(pose_param_list[i])
-        model.betas[300:350] = np.load(expr_param_list[i])
-        basename = pose_param_list[i].split("/")[-1].split(".")[0][:-5]
-        outmesh_path = join( outmesh_dir, f'{basename}_from_params.obj')
-        write_simple_obj( mesh_v=model.r, mesh_f=model.f, filepath=outmesh_path )
-        print('output mesh saved to: ', outmesh_path)
-
-    # -----------------------------------------------------------------------------
-    """
+    
     # Assign random pose and shape parameters
-    #model.pose[:]  = np.random.randn(model.pose.size) * 0
-    #model.betas[:100] = np.random.randn(100) * 0.06
-    #model.betas[300:350] = np.random.randn(50)
+    model.pose[:]  = np.random.randn(model.pose.size) * 0.5
+    model.betas[:100] = np.random.randn(100) * 0.06
+    model.betas[300:350] = np.random.randn(50)
     #print(model.betas[:100])
     #print(model.betas[300:350])
     #print(model.shapedirs[:,:,0:300])
+    model.pose[0:3] = 0
     # model.trans[:] = np.random.randn( model.trans.size ) * 0.01   # you may also manipulate the translation of mesh
+    print("pose:", model.pose)
+    print(type(model.pose))
     
-    model.pose[:] = np.load("output_params/Nakabayashi/pose")
-
+    
     # Write to an .obj file
     outmesh_dir = './output_obj'
     safe_mkdir( outmesh_dir )
@@ -74,4 +61,4 @@ if __name__ == '__main__':
     #np.save('CameraCalibration/hello_world_expCoeff.npy', model.betas[300:])
     #print('output coefficients saved to: ', 'CameraCalibration/hello_world_expCoeff.npy')
     print('output mesh saved to: ', outmesh_path) 
-    """
+    

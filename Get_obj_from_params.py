@@ -3,6 +3,7 @@ from os.path import join
 from smpl_webuser.serialization import load_model
 from fitting.util import write_simple_obj, safe_mkdir
 import glob
+import time
 import argparse
 
 """
@@ -27,11 +28,20 @@ if __name__ == '__main__':
     param_list = glob.glob("output_params/estimated/*.npy")
     #expr_param_list = glob.glob("output_params/Nakabayashi/expr/*.npy")
     loop_num = len(param_list)
+    time_list = []
     for i in range(loop_num):
         param_npy = np.load(param_list[i]).squeeze()
         model.pose[:] = param_npy[50:]
+        model.pose[0:3] = 0 #回転は0で固定
         model.betas[300:350] = param_npy[:50]
         basename = param_list[i].split("/")[-1].split(".")[0][-5:]
         outmesh_path = join( outmesh_dir, f'{basename}_from_params.obj')
+        start_time = time.perf_counter()
         write_simple_obj( mesh_v=model.r, mesh_f=model.f, filepath=outmesh_path )
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        if i!=0:
+            time_list.append(elapsed_time)
         print('output mesh saved to: ', outmesh_path)
+    print(time_list)
+    print(f"Average time: {np.mean(time_list)} seconds")

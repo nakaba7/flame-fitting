@@ -2,9 +2,11 @@ import torch
 import numpy as np
 import pandas as pd
 import os
+import time
 from torch.utils.data import Dataset, DataLoader
 from MachineLearning.ParamPredictorModel import ParamPredictorModel
 from tqdm import tqdm
+
 
 class CustomDataset(Dataset):
     def __init__(self, inputs):
@@ -23,13 +25,17 @@ def load_model(model_path, input_channel, output_dim, device):
     return model
 
 def predict(model, input_data, device):
-    model.eval()
+    #model.eval()
     with torch.no_grad():
         input_tensor = torch.tensor(input_data).float().to(device)
         input_tensor = input_tensor.unsqueeze(0).unsqueeze(1)  # Add batch and channel dimensions
+        start = time.perf_counter()
         output = model(input_tensor)
+        end = time.perf_counter()
+        elapsed_time = end - start
+        print(f"Prediction time: {elapsed_time} seconds")
         prediction = output.cpu().numpy()
-    return prediction
+    return prediction, elapsed_time
 
 def get_valid_indices(expr_dir, pose_dir):
     expr_files = sorted([f for f in os.listdir(expr_dir) if f.startswith('test') and f.endswith('_expr.npy')])
@@ -53,27 +59,32 @@ def main():
     valid_indices = get_valid_indices(expr_dir, pose_dir)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    #print(f"Device: {device}")
     # 新しいデータを読み込む
     inputs_csv = pd.read_csv(input_csv, header=None).values
 
     # モデルを読み込む
     model = load_model(model_path, input_channel, output_dim, device)
-
+    model.eval()
     filename_count=0
+    time_list = []
     # 各行に対して予測を行い、保存する
     for i, input_data in tqdm(enumerate(inputs_csv)):
-        prediction = predict(model, input_data, device)
+        prediction, elapsed_time = predict(model, input_data, device)
+        if i!=0:
+            time_list.append(elapsed_time)
         while True:
             if filename_count in valid_indices:
                 output_npy_path = os.path.join(output_dir, f'predict{filename_count:05d}.npy')
                 break
             else:
-                filename_count+=1
-            
+                filename_count+=1 
         np.save(output_npy_path, prediction)
         print(f"Prediction for row {filename_count} saved to {output_npy_path}")
+        print("======================================")
         filename_count+=1
+    print(time_list)
+    print(f"Average prediction time: {np.mean(time_list)} seconds")
 
 if __name__ == '__main__':
     main()
