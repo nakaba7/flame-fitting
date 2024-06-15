@@ -1,16 +1,38 @@
-from ReceiveSensorData import setup, receive_data  
+import serial
 import time
-if __name__ == "__main__":
-    output_dir = 'sensor_values/test'
-    ser, csv_file_path = setup(output_dir)
-    
-    # 他のファイルからデータを受信してCSVに保存する例
+
+# シリアルポートの設定（適切なポートを指定してください）
+SERIAL_PORT = 'COM11'  # Windowsの場合
+# SERIAL_PORT = '/dev/ttyACM0'  # LinuxまたはMacの場合
+BAUD_RATE = 115200
+
+def main():
     try:
+        # シリアルポートを開く
+        ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+        time.sleep(2)  # シリアル通信の安定のために少し待機
+        
         while True:
-            receive_data(ser, csv_file_path)
-            #print("Received data")
-            time.sleep(0.11)
+            # 文字 'c' を送信
+            ser.write(b'c')
+            print("Sent: 'c'")
+            
+            
+
+            # 受信データがあるか確認
+            if ser.in_waiting > 0:
+                # シリアルポートからデータを読み取る
+                line = ser.readline().decode('utf-8').rstrip()
+                print(f"Received: {line}")
+
+            
+
     except KeyboardInterrupt:
-        print("プログラムを終了します。")
+        print("終了します...")
+
     finally:
         ser.close()  # シリアルポートを閉じる
+        print("シリアルポートを閉じました。")
+
+if __name__ == "__main__":
+    main()

@@ -1,9 +1,14 @@
 import serial
 import csv
 import os
-import keyboard
+import time
+
 """
 データ収集に使う関数の定義
+csvファイルへセンサデータを書き込むテストをしたい場合はこのスクリプトを実行する.
+WSLではなくWindows上で実行すること.
+Usage:
+    python AffectiveHMD/Quest2_affectiveHMD.py
 """
 
 
@@ -62,13 +67,12 @@ def write_csv(ser, csvwriter):
     """
     error_list = [0 for i in range(16)]
     try:
-        #with open(csv_file_path, 'a', newline='') as csvfile:
-        #csvwriter = csv.writer(csv_file, delimiter=',')
         line = ser.readline().decode('utf-8', errors='ignore').rstrip()  # エラーを無視するデコード
         if line:
             dataList = line.split(',')
             # 数字のみのリストに変換。無効なデータは無視
             dataList = [int(x) for x in dataList if x.isdigit()]
+            print(dataList)
             if dataList:  # データリストが空でない場合
                 csvwriter.writerow(dataList)
                 #print(dataList)
@@ -80,19 +84,20 @@ def write_csv(ser, csvwriter):
         print(f"エラーが発生しました: {e}")
 
 if __name__ == "__main__":
-    output_dir = '../sensor_values/test'
+    output_dir = 'sensor_values'
     ser, csv_file_path = setup(output_dir)
+    time.sleep(2)  # シリアル通信の安定のために少し待機
     try:
-        while True:
-            if keyboard.is_pressed('c'):
+        with open(csv_file_path, 'a', newline='') as csvfile:
+            csvwriter = csv.writer(csvfile, delimiter=',')
+            while True:
                 ser.reset_input_buffer()  # シリアルバッファをクリア
-                ser.write(b'c')  # Arduinoに合図を送る
-                # 確実にデータが返ってくるまで待機
-                while ser.in_waiting == 0:
-                    pass
-                receive_data(ser, csv_file_path)
+                ser.write(b'c')  # Arduinoに合図を送る 
+                write_csv(ser, csvwriter)
                 
     except KeyboardInterrupt:
-        print("プログラムを終了します。")
+        print("終了します...")
+        
     finally:
         ser.close()  # シリアルポートを閉じる
+        print("シリアルポートを閉じました。")
