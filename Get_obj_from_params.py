@@ -13,12 +13,6 @@ Usage:
 
 """
 
-def get_obj_from_params(ex):
-    # Load FLAME model (here we load the generic model)
-    # Make sure path is correct
-    model_path = './models/generic_model.pkl'
-    model = load_model(model_path)           # the loaded model object is a 'chumpy' object, check
-
 if __name__ == '__main__':
     model_path = './models/generic_model.pkl'
     model = load_model(model_path)           

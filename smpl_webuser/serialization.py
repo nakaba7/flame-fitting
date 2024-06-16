@@ -80,6 +80,7 @@ def backwards_compatibility_replacements(dd):
 def ready_arguments(fname_or_dict):
     if not isinstance(fname_or_dict, dict):
         dd = pickle.load(open(fname_or_dict, 'rb'), encoding="latin1")
+        
     else:
         dd = fname_or_dict
 
