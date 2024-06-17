@@ -60,5 +60,5 @@ if __name__ == '__main__':
     write_simple_obj( mesh_v=model.r, mesh_f=model.f, filepath=outmesh_path )
     #np.save('CameraCalibration/hello_world_expCoeff.npy', model.betas[300:])
     #print('output coefficients saved to: ', 'CameraCalibration/hello_world_expCoeff.npy')
-    print('output mesh saved to: ', outmesh_path) 
+    print('output mesh saved to: ', outmesh_path)
     

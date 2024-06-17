@@ -53,7 +53,6 @@ def save_model(model, fname):
 
 
 def backwards_compatibility_replacements(dd):
-
     # replacements
     if 'default_v' in dd:
         dd['v_template'] = dd['default_v']
@@ -80,7 +79,6 @@ def backwards_compatibility_replacements(dd):
 def ready_arguments(fname_or_dict):
     if not isinstance(fname_or_dict, dict):
         dd = pickle.load(open(fname_or_dict, 'rb'), encoding="latin1")
-        
     else:
         dd = fname_or_dict
 
