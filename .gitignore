@@ -14,3 +14,5 @@ output_landmark/2d/*
 output_landmark/3d/*
 *.zip
 models/*
+eigen
+mesh
